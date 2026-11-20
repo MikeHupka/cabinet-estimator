@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cabinet Estimator by ES&amp;S Woodworking</title>
+<style>
+:root{--bg:#f3f2f1;--card:#fff;--ink:#201f1e;--mute:#605e5c;--line:#e1dfdd;--bd:#8a8886;--acc:#0f6cbd;--accink:#fff;--new:#eff6fc;--hdr:#0f6cbd}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1a19;--card:#292827;--ink:#f3f2f1;--mute:#c8c6c4;--line:#3b3a39;--bd:#8a8886;--acc:#479ef5;--accink:#201f1e;--new:#1f2d3b;--hdr:#115ea3}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 'Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;padding-bottom:84px}
+h1{font-size:1.35rem;font-weight:600;margin:0}
+header{background:var(--hdr);color:#fff;padding:12px 16px}
+header small{opacity:.9}
+main{max-width:760px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.card.new{background:var(--new);border-color:var(--acc)}
+h2{font-size:1.05rem;font-weight:600;margin:0 0 8px}
+label{display:block;font-size:.85rem;font-weight:600;color:var(--mute);margin:8px 0 3px}
+input,select,textarea,button{font:inherit}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:2px;background:var(--card);color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;border-color:var(--acc)}
+button{padding:8px 14px;border-radius:4px;border:1px solid var(--bd);background:var(--card);color:var(--ink);cursor:pointer;font-weight:600}
+button:hover{background:var(--bg)}
+button.p{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+button.p:hover{filter:brightness(.92)}
+button:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}.seg button{flex:1}.seg button.on{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.line{font-weight:600}
+.sum div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--line)}
+.sum div b{text-align:right}
+.sum .tot{font-size:1.2rem;font-weight:600;border:0;padding-top:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 12px;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -1px 3px rgba(0,0,0,.1);z-index:5}
+.bar button{width:100%;max-width:736px;display:block;margin:0 auto;padding:12px;font-size:1.05rem}
+summary{cursor:pointer}
+table.s{width:100%;border-collapse:collapse;margin-bottom:8px}
+table.s td,table.s th{padding:3px;text-align:left;font-size:.85rem;vertical-align:top}
+table.s input{padding:6px}
+.muted{color:var(--mute);font-size:.85rem}
+#pr{display:none}
+.chip{position:relative;display:inline-flex;align-items:center;padding:5px 11px;border:1px solid var(--bd);border-radius:16px;margin:0 6px 6px 0;font-size:.85rem;font-weight:600;color:var(--ink);cursor:pointer;background:var(--card)}
+.chip input{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+.chip.on{background:var(--new);border-color:var(--acc);color:var(--acc)}
+.chip.on::before{content:'\2713\00a0'}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.grp{border-top:1px solid var(--line);padding-top:8px;margin-top:10px}
+.grp h4{margin:0 0 4px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);font-weight:600}
+.cs{font-size:.88rem;color:var(--mute);margin:-2px 0 2px}
+.ib{padding:4px 8px;font-size:.8rem}
+.alert{background:#fff4ce;border:1px solid #c19c00;border-left:4px solid #c19c00;color:#3b2f00;padding:8px 10px;border-radius:2px;margin:0 0 10px;font-size:.9rem}
+.bad{background:#fde7e9;border-color:#d13438;color:#4a0a0d}
+@media (prefers-color-scheme:dark){.alert{background:#433519;border-color:#c19c00;color:#fff1c2}.bad{background:#442726;border-color:#d13438;color:#ffd7d9}}
+#toast{display:none;position:fixed;left:12px;right:12px;bottom:78px;max-width:736px;margin:0 auto;background:#323130;color:#fff;border-radius:4px;padding:8px 12px;z-index:9;justify-content:space-between;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#toast button{background:#fff;color:#201f1e;border-color:#fff}
+.steps{margin:4px 0 8px 18px;padding:0;font-size:.85rem}
+@media print{
+ body{background:#fff;color:#000;padding:0;font:11pt Arial,sans-serif}
+ header,main,.bar,#toast{display:none!important}
+ #pr{display:block;color:#000;background:#fff}
+ #pr table{width:100%;border-collapse:collapse;margin:6px 0 12px}
+ #pr th,#pr td{border:1px solid #000;padding:3px 5px;text-align:left;font-size:10pt;vertical-align:top}
+ #pr td.r,#pr th.r{text-align:right}
+ #pr h1{font-size:18pt;margin:0 0 6px}#pr h2{font-size:14pt;margin:14px 0 4px}#pr h3{margin:10px 0 2px;font-size:12pt}
+ #pr .pb{page-break-before:always}
+ #pr svg{max-width:300px}
+ #pr .steps{font-size:10pt}
+}
+</style>
+</head>
+<body>
+<header><h1>Cabinet Estimator</h1><small>by ES&amp;S Woodworking · Version 1.0</small></header>
+<main>
+ <div class="card">
+  <h2>Quote</h2>
+  <div class="seg" style="margin-bottom:6px">
+   <button id="savebtn" onclick="saveQuote()">Save quote</button>
+   <button id="undobtn" onclick="undo()" disabled>Undo</button>
+   <button id="clrbtn" onclick="clearAll()">Start over</button>
+  </div>
+  <label for="cust">Customer</label>
+  <input id="cust" autocomplete="off" placeholder="Customer name" oninput="setCust('cust',this.value)">
+  <div class="g2">
+   <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="off" oninput="setCust('phone',this.value)"></div>
+   <div><label for="email">Email</label><input id="email" type="email" autocomplete="off" oninput="setCust('email',this.value)"></div>
+  </div>
+  <label for="addr">Address</label>
+  <textarea id="addr" rows="2" autocomplete="off" placeholder="Job site or mailing address" oninput="setCust('addr',this.value)"></textarea>
+ </div>
+ <div class="card" id="fin"></div>
+ <div id="list"></div>
+ <div class="card" id="adj"></div>
+ <div class="card" id="extras"></div>
+ <div class="card sum" id="sum"></div>
+ <div class="card">
+  <h2>Print</h2>
+  <div class="seg">
+   <button class="p" onclick="printQuote()">Print Customer Quote</button>
+   <button onclick="printShop()">Print Shop Sheet</button>
+  </div>
+  <p class="muted" style="margin-bottom:0">Customer Quote: prices only, for the customer. Shop Sheet: hardware, cut list and layout, doors and drawers, notes, and your costs. Do not hand the Shop Sheet to a customer.</p>
+ </div>
+ <div class="card" id="costs"></div>
+ <div class="card"><h2>Shop details on screen</h2><p class="muted">Cut list and sheet layout, face frame pieces, doors, drawer fronts, and drawer boxes.</p><button class="p" onclick="genCut()">Generate shop details</button><div id="cutout"></div></div>
+ <details class="card"><summary><b>Saved quotes</b></summary><div id="saved"></div></details>
+ <details class="card"><summary><b>Backup and restore</b></summary><div id="backup"></div></details>
+ <details class="card"><summary><b>Shop pricing rates</b></summary><div id="set"></div></details>
+ <div id="stbanner"></div>
+</main>
+<div id="toast"><span id="toastmsg"></span><button onclick="undo()">Undo</button></div>
+<div class="bar"><button class="p" id="addbtn" onclick="addCab()">+ Add cabinet</button></div>
+<div id="pr"></div>
+<script>
+/* ============================================================
+   Cabinet Estimator by ES&S Woodworking
+   Sections: 1 Defaults | 2 State, undo, backup | 3 Cabinet rules
+             4 Face frame, doors, drawers | 5 Costs | 6 Cut list
+             7 Screen rendering | 8 Printouts | 9 Self-test
+   ============================================================ */
+
+/* ---------- 1. DEFAULTS ---------- */
+const SIZES=[12,15,18,21,24,27,30,32,34,36,42,44,46,48];
+const BASE_SZ=[12,15,18,21,24,30,36,42];   // sizes with fixed default prices; others are scaled from the nearest
+const DEPTHS=[18,19,20,21,22,23,24];       // base cabinet depths shown to the user (include the face frame)
+const PIL_SIZES=[24,36,48,60];
+const SPECIES=['Walnut','Cherry','Maple','Ash','Hickory'];
+const tier=s=>s<=18?[550,450,125,100]:s<=30?[750,550,150,125]:[950,750,175,150]; // base, upper, drawer, slide out
+
+function newQ(){return{cust:'',phone:'',email:'',addr:'',finish:'',method:'',species:'',cabs:[],pack:false,deliv:'',disc:'',extras:[],sid:0}}
+function defS(){
+ const z={};
+ BASE_SZ.forEach(s=>{const t=tier(s);z[s]={base:t[0],upper:t[1],drawer:t[2],slide:t[3]}});
+ SIZES.filter(s=>!z[s]).forEach(s=>{
+  const n=BASE_SZ.reduce((a,b)=>Math.abs(b-s)<Math.abs(a-s)?b:a),r=s/n,q=z[n];
+  z[s]={base:Math.round(q.base*r),upper:Math.round(q.upper*r),drawer:q.drawer,slide:q.slide}});
+ return{v:2,sizes:z,noDrawer:100,h84:200,h96:300,markup:0,waste:10,crown:12,kick:8,stain:75,pack:12,tax:6,shelf:65,
+  cornerBase:750,cornerUpper:650,mw:350,garbage:400,lazy:350,
+  pil:{24:1.5,36:2.5,48:5,60:8},
+  cut:{sheetW:48,sheetL:96,t:0.5,shelfT:0.75,kerf:0.125,dado:0.25,depthU:11.25,ffT:0.75,inset:0.5,filler:4,stickL:96,
+   toeH:4,toeD:4,botH:5.5,ffW:1.5,ffWall:2.5,ffTopU:2,drawerH:5,counterH:34.5},
+  door:{overlay:0.75,frameW:2.375,frameT:0.75,panelT:0.25,groove:0.375,joint:0.375,narrowW:1.5,boxGroove:0.25,gap:0.125,boxT:0.5,boxShrink:1,boxClear:1},
+  mat:{hinge:8,ply12:90,ply34:120,ply14:'',maple:3.5,clips1000:100,slide:30,bracket:1.5,crown:'',kick:'',
+   screwPil:'',screwDoor:'',screwFF:'',screwSlide:'',lumWaste:0}};
+}
+// Copies saved values over defaults, keeping only keys that exist in the defaults.
+function merge(def,src){
+ if(!src||typeof src!=='object')return def;
+ for(const k in def){
+  if(def[k]&&typeof def[k]==='object'&&!Array.isArray(def[k]))def[k]=merge(def[k],src[k]);
+  else if(src[k]!==undefined)def[k]=src[k]}
+ return def}
+function loadSettings(raw){
+ const s=merge(defS(),raw||{});
+ if(raw&&!raw.v){ // settings saved before the 84"/96" upcharges had defaults
+  if(raw.h84===''||raw.h84==null)s.h84=200;
+  if(raw.h96===''||raw.h96==null)s.h96=300}
+ s.v=2;return s}
+
+/* ---------- 2. STATE, UNDO, BACKUP ---------- */
+let S=defS(),Q=newQ(),lastId=0,nid=1,undoSnap=null,TESTING=false;
+const $=id=>document.getElementById(id);
+const m=n=>'$'+(Math.round(n*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nl=s=>esc(s).replace(/\n/g,'<br>');
+function fr(n){n=Math.round(n*16)/16;let w=Math.floor(n),f=Math.round((n-w)*16);if(f===16){w++;f=0}if(!f)return w+'"';let g=16;while(f%2===0){f/=2;g/=2}return (w?w+' ':'')+f+'/'+g+'"'}
+const isBase=c=>c.type==='Base';
+const isTall=c=>c.type==='Base'&&c.height>=84;
+const num=x=>+x||0;
+
+try{
+ const a=localStorage.getItem('ces_S'),b=localStorage.getItem('ces_Q');
+ if(a)S=loadSettings(JSON.parse(a));
+ if(b)Q=Object.assign(newQ(),JSON.parse(b));
+}catch(e){}
+
+// Brings older saved cabinets in line with the current rules.
+function migrate(q){
+ q.cabs.forEach(c=>{
+  delete c.noPil;
+  if(c.corner&&c.size!==12){c.prevSize=c.size;c.size=12}
+  if(isBase(c)){
+   if(c.height>=84&&c.drawers>3)c.drawers=3;
+   if(c.slideU===undefined){c.slideL=c.slides>0;c.slideU=c.slides>1;c.shelves=c.slides>0?0:1}
+   if(c.drawers>1){c.slideU=false;c.slideL=false;c.slides=0}
+   if(!isTall(c)&&!c.sink&&!c.garbage&&!c.lazy&&c.drawers>1&&!dSide(c))c.shelves=0;
+   if(c.height>=84&&c.kickOn===undefined){c.kickOn=true;c.crownOn=false;c.corner=false}
+   if(c.height>=84&&c.doorsU===undefined){c.doorsU=c.size>=42?2:1;c.doorsL=c.doorsU}}
+  nid=Math.max(nid,c.id+1)})}
+migrate(Q);
+
+function save(){if(TESTING)return;try{localStorage.setItem('ces_S',JSON.stringify(S));localStorage.setItem('ces_Q',JSON.stringify(Q))}catch(e){}}
+function setCust(k,v){Q[k]=v;save()}
+function syncInputs(){['cust','phone','email','addr'].forEach(k=>{const e=$(k);if(e)e.value=Q[k]||''})}
+
+// One-step undo: a snapshot of the current quote is taken before each change.
+function snap(label,loud){if(TESTING)return;undoSnap={label,q:JSON.stringify(Q),last:lastId};showUndo(loud?label:'')}
+function showUndo(msg){
+ const b=$('undobtn');if(b){b.disabled=!undoSnap;b.title=undoSnap?'Undo: '+undoSnap.label:''}
+ if(msg&&$('toast')){$('toastmsg').textContent=msg;$('toast').style.display='flex';clearTimeout(showUndo.t);showUndo.t=setTimeout(hideToast,7000)}}
+function hideToast(){if($('toast'))$('toast').style.display='none'}
+function undo(){
+ if(!undoSnap)return;
+ Q=Object.assign(newQ(),JSON.parse(undoSnap.q));migrate(Q);lastId=undoSnap.last;undoSnap=null;
+ hideToast();syncInputs();renderAll()}
+
+function download(name,text,type){
+ const a=document.createElement('a'),u=URL.createObjectURL(new Blob([text],{type}));
+ a.href=u;a.download=name;document.body.appendChild(a);a.click();
+ setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},500)}
+function getSaved(){try{return JSON.parse(localStorage.getItem('ces_saved')||'[]')}catch(e){return[]}}
+function putSaved(a){try{localStorage.setItem('ces_saved',JSON.stringify(a));return true}catch(e){alert('Could not save. Browser storage may be blocked.');return false}}
+
+function backupData(){return{app:'cabinet-estimator',version:2,appVersion:'1.0',exported:new Date().toISOString(),settings:S,current:Q,saved:getSaved()}}
+function exportBackup(){
+ download('Cabinet Estimator backup '+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(backupData(),null,1),'application/json');
+ try{localStorage.setItem('ces_backup',new Date().toISOString())}catch(e){}
+ renderBackup()}
+// Restores settings and the current quote from a backup and merges its saved quotes into the existing list.
+function applyBackup(d){
+ if(!d||d.app!=='cabinet-estimator'||!d.settings)throw new Error('not a backup');
+ S=loadSettings(d.settings);
+ Q=Object.assign(newQ(),d.current||{});migrate(Q);
+ const have=getSaved(),inc=Array.isArray(d.saved)?d.saved:[],ids=new Set(inc.map(e=>e.sid));
+ putSaved(inc.concat(have.filter(e=>!ids.has(e.sid))));
+ save()}
+function importBackup(file){
+ if(!file)return;
+ const r=new FileReader();
+ r.onload=()=>{
+  let d;try{d=JSON.parse(r.result);if(d.app!=='cabinet-estimator'||!d.settings)throw 0}catch(e){alert('That file is not a Cabinet Estimator backup.');return}
+  if(!confirm('Restore this backup?\n\nShop pricing and settings will be replaced. The current quote will be replaced (Undo can bring it back). Saved quotes in the file are added to your list.'))return;
+  snap('Restored a backup',true);applyBackup(d);lastId=0;syncInputs();renderSet();renderAll()};
+ r.readAsText(file)}
+
+/* ---------- 3. CABINET RULES ---------- */
+const stainOn=()=>Q.finish==='clear'&&Q.method==='stain';
+const okReady=()=>Q.finish==='paint'||(Q.finish==='clear'&&!!Q.method&&!!Q.species);
+function multiDr(c){return isBase(c)&&c.size>40&&(c.drawers||0)>1&&!c.sink&&!c.lazy&&!c.garbage} // wide enough to ask stacked or side by side
+function dSide(c){return multiDr(c)&&c.dl==='side'}
+function pilOpts(c){return isBase(c)?(c.height>=84?PIL_SIZES:[24]):(c.height==42?[24,36]:[24])}
+
+function calc(c){
+ const p=S.sizes[c.size],b=isBase(c),tall=isTall(c),side=dSide(c);
+ let price=b?(c.corner?+S.cornerBase:p.base):(c.mw?+S.mw:c.corner?+S.cornerUpper:p.upper);
+ if(b){
+  if(c.height==84)price+=num(S.h84);
+  if(c.height==96)price+=num(S.h96);
+  if(tall||c.corner)price+=c.drawers*p.drawer;            // no drawer is included in the price
+  else if(c.drawers==0)price-=S.noDrawer;                  // base price includes one drawer
+  else price+=(c.drawers-1)*p.drawer;
+  price+=c.slides*p.slide;
+  if(c.garbage)price+=+S.garbage;
+  if(c.lazy)price+=+S.lazy}
+ if(!b&&c.shelves==3)price+=+S.shelf;
+ if(stainOn())price+=+S.stain;
+ const stacked=b&&c.drawers>1&&!side;
+ const doors=tall?(c.doorsU||0)+(stacked?0:(c.doorsL||0)):b?(stacked?0:(c.size<24?1:2)):(c.size<24?1:2);
+ let pil=b?((c.slides>0||(c.drawers>=2&&!tall&&!side)||c.shelves===0)?0:4):((c.mw||c.shelves===0)?0:4);
+ if(tall&&!c.doorsU)pil=(c.openPil&&c.shelves>0)?4:0;
+ return{price:price*(1+S.markup/100),doors,pil,sl:b?c.drawers+c.slides:0,sh:b?(c.shelves||0):((c.mw||c.shelves===0)?0:(c.shelves||2))}}
+
+// Slide length: cabinet depth (face frame included) minus 2", to the nearest even inch (a tie goes to the shorter slide).
+const slideLen=c=>2*Math.ceil(((+c.depth||24)-2)/2-0.5-1e-9);
+
+// Trim runs (inches) that this cabinet needs.
+function trimLens(c){
+ const cw=12*((c.cwL?1:0)+(c.cwR?1:0)),kw=24*((c.kwL?1:0)+(c.kwR?1:0));let crown=0,kick=0;
+ if(c.type==='Upper')crown=c.size+cw;
+ else{if(!c.noToe&&(!isTall(c)||c.kickOn!==false))kick=c.size+kw;if(isTall(c)&&c.crownOn)crown=c.size+cw}
+ return{crown,kick}}
+
+function tot(){
+ const t={cp:[],kp:[],pilBy:{24:0,36:0,48:0,60:0},slideBy:{},n:Q.cabs.length,cab:0,hinges:0,sliders:0,shelves:0,pil:0,up:0,base:0};
+ Q.cabs.forEach(c=>{
+  const r=calc(c),tl=trimLens(c);
+  t.cab+=r.price;t.hinges+=r.doors*2;t.sliders+=r.sl;if(r.sl){const L=slideLen(c);t.slideBy[L]=(t.slideBy[L]||0)+r.sl};t.shelves+=r.sh;t.pil+=r.pil;
+  if(r.pil)t.pilBy[c.pilSz||24]+=r.pil;
+  if(tl.crown){t.up+=tl.crown;t.cp.push(tl.crown)}
+  if(tl.kick){t.base+=tl.kick;t.kp.push(tl.kick)}});
+ const W=(1+S.waste/100)*(1+S.markup/100);
+ t.crown=t.up/12*S.crown*W;t.kick=t.base/12*S.kick*W;t.pack=Q.pack?t.n*S.pack:0;
+ t.ex=(Q.extras||[]).reduce((a,x)=>a+num(x.price),0);
+ t.sub=t.cab+t.crown+t.kick+t.ex+t.pack+num(Q.deliv)-num(Q.disc);
+ t.tax=t.sub*S.tax/100;t.total=t.sub+t.tax;return t}
+
+/* ----- Editing a cabinet: each rule below keeps the options consistent ----- */
+function newCab(){return{id:nid++,type:'Base',size:18,height:34.5,depth:24,drawers:1,slides:0,slideU:false,slideL:false,shelves:1}}
+function addCab(){
+ if(!okReady())return;
+ snap('Added a cabinet');
+ const c=newCab();Q.cabs.push(c);lastId=c.id;renderMain();
+ const el=$('cab'+c.id);if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'center'})}
+function dup(id){
+ const i=Q.cabs.findIndex(c=>c.id===id);if(i<0)return;
+ snap('Duplicated a cabinet');
+ const c=Object.assign({},Q.cabs[i],{id:nid++,col:false});Q.cabs.splice(i+1,0,c);lastId=c.id;renderMain()}
+function del(id){snap('Removed a cabinet',true);Q.cabs=Q.cabs.filter(c=>c.id!==id);renderMain()}
+function togCab(id){const c=Q.cabs.find(c=>c.id===id);c.col=!c.col;renderList();save()}
+function togNote(id){const c=Q.cabs.find(c=>c.id===id);c.nOpen=!c.nOpen;renderList();save()}
+function setNote(id,v){Q.cabs.find(c=>c.id===id).note=v;save()}     // corner cabinet details
+function setCNote(id,v){Q.cabs.find(c=>c.id===id).cnote=v;save()}   // free-form cabinet notes (shop sheet)
+
+function upd(id,k,v){
+ const c=Q.cabs.find(c=>c.id===id);if(!c)return;
+ snap('Changed a cabinet');
+ const prev=c[k],prevSz=c.size;c[k]=v;
+ // hardware choices exclude each other
+ if(v===true){
+  if(k==='garbage'){const w=c.sink||c.lazy;c.lazy=false;c.sink=false;if(w)c.drawers=1}
+  if(k==='lazy'){c.garbage=false;c.sink=false}
+  if(k==='sink'){c.garbage=false;c.lazy=false}}
+ // base <-> upper
+ if(k==='type'){
+  c.sink=false;c.slideU=false;c.slideL=false;c.slides=0;c.height=v==='Base'?34.5:36;c.shelves=v==='Base'?1:2;
+  if(v==='Base')c.drawers=1;
+  c.garbage=false;c.lazy=false;c.mw=false;c.corner=false;c.cwL=c.cwR=c.kwL=c.kwR=false}
+ // width limits
+ if(k==='size'&&v<=15&&c.sink){c.sink=false;c.drawers=c.lazy?0:1}
+ if(k==='size'&&v!==30&&c.mw){c.mw=false;c.shelves=2}
+ // sink base
+ if(k==='sink'){
+  if(v){c.drawers=0;c.slideU=false;c.slideL=false;c.shelves=0}
+  else{c.drawers=c.lazy?0:1;c.shelves=(c.garbage||c.lazy)?0:1}}
+ // microwave upper and corner cabinet
+ if(k==='mw'){c.shelves=v?0:2;if(v)c.corner=false}
+ if(k==='corner'){
+  if(v){
+   c.prevSize=prevSz;c.size=12;c.sink=false;
+   if(c.type==='Upper'&&c.mw){c.mw=false;c.shelves=2}
+   if(c.type==='Base'&&!c.sink&&!c.lazy)c.drawers=0}
+  else{
+   c.size=c.prevSize||18;
+   if(c.lazy){c.lazy=false;c.shelves=c.garbage?0:1}
+   if(c.type==='Base'&&!c.sink)c.drawers=1}}
+ // garbage can and lazy susan hardware
+ if(k==='garbage'||k==='lazy'){
+  if(c.garbage||c.lazy){c.slideU=false;c.slideL=false;c.shelves=0}else c.shelves=c.sink?0:1;
+  if(c.lazy)c.drawers=0;else if(k==='lazy'&&!c.sink)c.drawers=1;else if(c.garbage&&c.drawers>1)c.drawers=1}
+ // drawers, layout and slide outs on standard-height bases
+ if(k==='drawers'&&!isTall(c)){
+  if(v>1){c.slideU=false;c.slideL=false;c.shelves=dSide(c)?1:0}
+  else if(prev>1)c.shelves=(c.garbage||c.lazy||c.sink)?0:1}
+ if(k==='dl'&&!isTall(c))c.shelves=(v==='side'&&multiDr(c))?1:0;
+ if(k==='slideU')c.shelves=v?0:1;
+ if(k==='slideL'&&!v&&!c.slideU)c.shelves=1;
+ // tall cabinets (84" and 96")
+ if(k==='height'){
+  if(v>=84&&prev<84){
+   c.sink=false;c.garbage=false;c.lazy=false;c.slideU=false;c.slideL=false;
+   c.doorsU=c.size>=42?2:1;c.doorsL=c.doorsU;c.drawers=0;c.shelves=1;c.kickOn=true;c.crownOn=false}
+  else if(v<84&&prev>=84){
+   c.kickOn=true;c.crownOn=false;c.cwL=c.cwR=false;c.doorsU=0;c.doorsL=0;c.drawers=1;c.shelves=1}}
+ if(k==='size'&&isTall(c)&&v>=42){if(c.doorsU)c.doorsU=2;if(c.doorsL)c.doorsL=2}
+ if(k==='kickOn'&&!v)c.kwL=c.kwR=false;
+ if(k==='noToe'&&v)c.kwL=c.kwR=false;
+ if(k==='crownOn'&&!v)c.cwL=c.cwR=false;
+ if((k==='drawers'||k==='size'||k==='dl'||k==='height')&&isTall(c)&&c.drawers>1&&!dSide(c)&&c.doorsL)c.doorsL=0;
+ if(k==='drawers'&&isTall(c)&&c.drawers===0&&!c.doorsU&&!c.doorsL){c.doorsU=c.size>=42?2:1;c.openPil=false;c.shelves=1}
+ if(k==='doorsU'||k==='doorsL'){
+  if(c.doorsU+c.doorsL===0&&!(isTall(c)&&c.drawers>0))c[k]=prev;            // a tall cabinet needs a door unless it has drawers
+  else if(c.size>=42&&c[k]===1)c[k]=2;                                     // 42" and wider: two doors per section
+  if(k==='doorsU'){if(!c.doorsU){c.openPil=false;c.shelves=0}else if(!prev){c.shelves=1;c.openPil=false}}}
+ if(k==='openPil')c.shelves=v?1:0;
+ // clean-up that applies after any change
+ if(isBase(c)&&!isTall(c)&&!c.sink&&!c.garbage&&!c.lazy&&c.drawers>1&&!dSide(c))c.shelves=0;
+ if(!pilOpts(c).includes(c.pilSz))c.pilSz=24;
+ if(isBase(c))c.slides=(c.slideU?1:0)+(c.slideL?1:0);
+ renderMain()}
+
+function setFinish(f){snap('Changed the finish');Q.finish=f;Q.method='';Q.species='';renderAll()}
+function addExtra(){Q.extras.push({desc:'',price:''});renderAdj();save()}
+function delExtra(i){snap('Removed an item',true);Q.extras.splice(i,1);renderAdj();renderMain()}
+function clearAll(){
+ snap('Cleared the quote',true);
+ Q=newQ();lastId=0;syncInputs();renderAll();scrollTo(0,0)}
+
+/* ---------- 4. FACE FRAME, DRAWER OPENINGS, DOORS, DRAWER FRONTS, DRAWER BOXES ---------- */
+const cabDepth=c=>isBase(c)?(+c.depth||24)-(+S.cut.ffT):+S.cut.depthU;   // plywood depth (face frame excluded)
+
+// Face frame geometry shared by the face frame list and the door/drawer calculator. null for corner cabinets.
+function frameGeom(c){
+ if(c.corner)return null;
+ const C=S.cut,b=isBase(c),toe=b&&!c.noToe,Hf=toe?c.height-(+C.toeH):c.height,
+  L=c.wallL?+C.ffWall:+C.ffW,R=c.wallR?+C.ffWall:+C.ffW,openW=c.size-L-R,
+  topW=b?+C.ffW:+C.ffTopU,botW=b&&!toe?+C.botH:+C.ffW;
+ return{b,toe,Hf,L,R,openW,topW,botW,openH:Hf-topW-botW}}
+
+// Stacked drawers: the top drawer is the standard height, the rest of the space is shared evenly after the 1 1/2" rails.
+function drawerOpenings(c){
+ if(!isBase(c)||c.corner||c.sink||c.lazy||c.garbage)return null;
+ const n=c.drawers||0;if(n<2||dSide(c))return null;
+ const C=S.cut,toe=!c.noToe,zone=isTall(c)?+C.counterH:c.height,Hf=toe?zone-(+C.toeH):zone,
+  open=Hf-(+C.ffW)-(toe?+C.ffW:+C.botH),top=+C.drawerH,rem=(open-top-(n-1)*(+C.ffW))/(n-1);
+ return [top].concat(Array(n-1).fill(rem))}
+
+function ffParts(c){
+ const g=frameGeom(c);if(!g)return null;
+ const C=S.cut,b=g.b,tall=isTall(c),P=[];
+ P.push({name:'Left stile',w:g.L,len:g.Hf,q:1},{name:'Right stile',w:g.R,len:g.Hf,q:1},
+  {name:'Top rail',w:g.topW,len:g.openW,q:1},{name:'Bottom rail',w:g.botW,len:g.openW,q:1});
+ if(b){ // sections stacked in the opening: drawers, doors; a middle rail goes between sections
+  const dr=c.drawers||0,ds=dSide(c)?(dr?1:0):dr,dl=tall?(c.doorsL&&!(dr>1&&!dSide(c))?1:0):0;
+  const sec=tall?(c.doorsU?1:0)+ds+dl:ds+(calc(c).doors>0?1:0);
+  if(dSide(c))P.push({name:'Drawer divider',w:+C.ffW,len:+C.drawerH,q:dr-1});
+  if(sec>1)P.push({name:'Middle rail',w:+C.ffW,len:g.openW,q:sec-1})}
+ return P}
+
+function sticks(pcs){ // each piece is cut whole; pieces are packed onto 96" sticks with a blade kerf between them
+ const L=+S.cut.stickL||96,K=+S.cut.kerf||0,u=[];let ft=0;
+ pcs.slice().sort((a,b)=>b-a).forEach(x=>{ft+=x/12;const i=u.findIndex(v=>v+K+x<=L+1e-9);if(i<0)u.push(x);else u[i]+=K+x});
+ return{ft,n:u.length,L}}
+const stickText=r=>r.ft?r.ft.toFixed(1)+' linear ft, '+r.n+' x '+r.L+'" stick'+(r.n>1?'s':''):'0';
+function ffLines(){
+ const T={};
+ Q.cabs.forEach(c=>{const P=ffParts(c);if(P)P.forEach(x=>{for(let k=0;k<x.q;k++)(T[x.w]=T[x.w]||[]).push(x.len)})});
+ return Object.keys(T).sort((a,b)=>a-b).map(w=>Object.assign({w:+w},sticks(T[w])))}
+
+/* Doors, drawer fronts and drawer boxes.
+   Doors and fronts overlap the opening by the overlay on every outside edge. Door pairs meet in the middle with a small gap.
+   Drawer boxes are smaller than the opening to leave room for the slides. */
+function boxDepthOf(c){return Math.floor(cabDepth(c)-(+S.cut.inset)-(+S.cut.t)-(+S.door.boxClear))}
+function fronts(c){
+ const g=frameGeom(c);if(!g)return{skip:'Corner cabinet'};
+ if(c.mw)return{skip:'Microwave upper'};
+ const C=S.cut,D=S.door,ov=+D.overlay,gap=+D.gap,ff=+C.ffW,dh=+C.drawerH,r=calc(c),tall=isTall(c),side=dSide(c),n=c.drawers||0,out={doors:[],drawers:[]};
+ const door=(count,openH,where)=>{
+  if(count>0&&openH>0)out.doors.push({where,qty:count,w:count===1?g.openW+2*ov:g.openW/2+ov-gap/2,h:openH+2*ov})};
+ const drawer=(qty,ow,oh,where)=>out.drawers.push({where,qty,ow,oh,sw:c.narrowStile?(+D.narrowW||1.5):+D.frameW,w:ow+2*ov,h:oh+2*ov,bw:ow-(+D.boxShrink),bh:oh-(+D.boxShrink),bd:boxDepthOf(c)});
+ const row=(count,oh,where)=>drawer(count,(g.openW-(count-1)*ff)/count,oh,where);
+ if(!isBase(c)){door(r.doors,g.openH,'Doors');return out}
+ let OL=g.openH;                                  // opening height of the lower section (to the counter rail on tall cabinets)
+ if(tall){
+  const Hz=g.toe?+C.counterH-(+C.toeH):+C.counterH;
+  OL=Hz-g.botW-ff;
+  door(c.doorsU||0,(g.Hf-Hz)-ff-g.topW,'Upper doors')}
+ const lowerDoors=tall?((side||n<2)?(c.doorsL||0):0):r.doors;
+ if(n>1&&!side)drawerOpenings(c).forEach((oh,i)=>drawer(1,g.openW,oh,'Drawer '+(i+1)));
+ else if(n>=1){row(side?n:1,dh,side?'Drawers (side by side)':'Drawer');door(lowerDoors,OL-dh-ff,tall?'Lower doors':'Doors')}
+ else door(lowerDoors,OL,tall?'Lower doors':'Doors');
+ return out}
+
+function framePieces(w,h,sw){ // frame and panel door or front; stiles run full height, rails fit between them (plus the joint allowance)
+ const D=S.door,rw=+D.frameW,st=sw||rw,t=+D.frameT,gr=+D.groove,jt=+D.joint||0,iw=w-2*st,ih=h-2*rw;
+ if(iw<=0||ih<=0)return{solid:true,bf:w*h*t/144,sqft:0};
+ const rl=iw+2*jt;
+ return{solid:false,stile:{w:st,len:h},rail:{w:rw,len:rl},panel:{w:iw+2*gr,h:ih+2*gr},bf:(2*st*h+2*rw*rl)*t/144,sqft:(iw+2*gr)*(ih+2*gr)/144}}
+function boxPieces(f){ // maple sides, front and back; the bottom is panel material set into a groove on all four sides
+ const t=+S.door.boxT,bg=+S.door.boxGroove||0,w=f.bw,h=f.bh,d=f.bd,bw=w-2*t+2*bg,bh=d-2*t+2*bg;
+ return{side:{w:d,h},fb:{w:w-2*t,h},bottom:{w:bw,h:bh},bf:(2*d*h+2*(w-2*t)*h)*t/144,sqft:bw*bh/144}}
+function frontsAll(){
+ const list=[],T={frameBF:0,panelSqft:0,boxBF:0,skipped:[]},FW={},BX={};
+ const add=(o,k,len,n)=>{const key=+(+k).toFixed(4);for(let i=0;i<n;i++)(o[key]=o[key]||[]).push(len)};
+ Q.cabs.forEach((c,i)=>{
+  const f=fronts(c);
+  if(f.skip){T.skipped.push((i+1)+' ('+f.skip+')');return}
+  const items=[],frame=(d,p)=>{if(!p.solid){add(FW,p.stile.w,p.stile.len,2*d.qty);add(FW,p.rail.w,p.rail.len,2*d.qty)}};
+  f.doors.forEach(d=>{const p=framePieces(d.w,d.h);items.push({kind:'Door',d,p});T.frameBF+=d.qty*p.bf;T.panelSqft+=d.qty*p.sqft;frame(d,p)});
+  f.drawers.forEach(d=>{
+   const p=framePieces(d.w,d.h,d.sw),b=boxPieces(d);items.push({kind:'Drawer',d,p,b});
+   T.frameBF+=d.qty*p.bf;T.panelSqft+=d.qty*(p.sqft+b.sqft);T.boxBF+=d.qty*b.bf;frame(d,p);
+   add(BX,d.bh,d.bd,2*d.qty);add(BX,d.bh,b.fb.w,2*d.qty)});
+  list.push({n:i+1,items})});
+ const lines=o=>Object.keys(o).sort((a,b)=>a-b).map(k=>Object.assign({w:+k},sticks(o[k])));
+ T.frameL=lines(FW);T.boxL=lines(BX);
+ return{list,T}}
+
+/* ---------- 5. SHOP COSTS (materials only, before paint or finish) ---------- */
+function costs(P){
+ const M=S.mat,wl=1+num(M.lumWaste)/100,sheetSq=num(S.cut.sheetW)*num(S.cut.sheetL)/144,rows=[];
+ const areaOf=(its,n)=>its.filter(x=>x.cab===n).reduce((a,x)=>a+x.w*x.h,0);
+ const totA=P.A.reduce((a,x)=>a+x.w*x.h,0),totB=P.B.reduce((a,x)=>a+x.w*x.h,0);
+ const buyA=P.pkA?P.pkA.sheets.length*num(M.ply12):0,buyB=P.pkB?P.pkB.sheets.length*num(M.ply34):0;
+ const cat={Plywood:0,'Face frame':0,'Doors and fronts':0,'Drawer boxes':0,Hardware:0,Trim:0};
+ Q.cabs.forEach((c,i)=>{
+  const n=i+1,r=calc(c),k={};
+  k.Plywood=(totA?buyA*areaOf(P.A,n)/totA:0)+(totB?buyB*areaOf(P.B,n)/totB:0);
+  const ff=ffParts(c);
+  k['Face frame']=ff?ff.reduce((a,x)=>a+x.q*x.w*x.len*num(S.cut.ffT)/144,0)*num(M.maple)*wl:0;
+  const fl=P.fl.list.find(x=>x.n===n);let dBF=0,dSq=0,bBF=0;
+  if(fl)fl.items.forEach(it=>{dBF+=it.d.qty*it.p.bf;dSq+=it.d.qty*(it.p.sqft+(it.b?it.b.sqft:0));if(it.b)bBF+=it.d.qty*it.b.bf});
+  k['Doors and fronts']=dBF*num(M.maple)*wl+(sheetSq?dSq/sheetSq*num(M.ply14):0);
+  k['Drawer boxes']=bBF*num(M.maple)*wl;
+  const hinges=r.doors*2;
+  k.Hardware=r.doors*num(M.hinge)+r.sl*num(M.slide)+r.sl*2*num(M.bracket)+r.sh*4*num(M.clips1000)/1000+r.pil*num(S.pil[c.pilSz||24])
+   +r.pil*4*num(M.screwPil)+hinges*2*num(M.screwDoor)+hinges*num(M.screwFF)+r.sl*5*num(M.screwSlide);
+  const tl=trimLens(c);k.Trim=tl.crown/12*num(M.crown)+tl.kick/12*num(M.kick);
+  k.total=Object.keys(cat).reduce((a,x)=>a+k[x],0);
+  Object.keys(cat).forEach(x=>cat[x]+=k[x]);
+  rows.push(Object.assign({n,price:r.price,corner:!!c.corner},k))});
+ const total=rows.reduce((a,x)=>a+x.total,0);
+ return{rows,cat,total,margin:P.t.sub-total,panelMissing:P.fl.T.panelSqft>0&&!num(M.ply14),corners:P.cut.skipped}}
+
+/* ---------- 6. CUT LIST AND SHEET LAYOUT ---------- */
+function cutParts(){
+ const C=S.cut,t=+C.t,dd=+C.dado,items=[],skipped=[];
+ Q.cabs.forEach((c,i)=>{
+  const n=i+1;if(c.corner){skipped.push(n);return}
+  const b=isBase(c),W=c.size,H=c.height,D=cabDepth(c),inner=W-2*t,bi=D-C.inset-t;
+  const add=(code,name,w,h,nr,mat,note)=>items.push({label:n+'-'+code,name,w,h,nr,cab:n,m:mat||'a',note:note||''});
+  const sn=b?(c.noToe?'':'Toe kick notch '+fr(+C.toeD)+' x '+fr(+C.toeH)+' (front, bottom). ')+'Bottom dado '+fr(+C.botH-t)+' to '+fr(+C.botH)+' from bottom.':'';
+  add('S1','Side',D,H,1,'a',sn);add('S2','Side',D,H,1,'a',sn);                  // sides keep the grain running up the height
+  add('B','Bottom',inner+2*dd,bi+dd,0);add('K','Back',inner+2*dd,H,1);
+  add('F1','Filler',inner,+C.filler,0);add('F2','Filler',inner,+C.filler,0);
+  for(let k=1;k<=calc(c).sh;k++)add('H'+k,'Shelf',inner-0.25,bi-0.125,0,'b')});    // shelves are 3/4" stock
+ return{items,skipped}}
+
+/* Sheet layout. Every row is a full-width crosscut; each row is then ripped into parts.
+   Several orderings are tried and the one using the fewest sheets (then the fewest rows) wins. */
+function shelfPack(items,cmp){
+ const C=S.cut,SW=+C.sheetW,SL=+C.sheetL,K=+C.kerf,E=1e-9,sheets=[],big=[];
+ const L=items.map(it=>{const o=(it.nr||it.w>=it.h)?{w:it.w,h:it.h}:{w:it.h,h:it.w};return Object.assign({},it,{o})}).sort(cmp);
+ const newRow=(sh,a)=>{const r={y:sh.y,h:a.h,x:0,parts:[]};sh.rows.push(r);sh.y+=a.h+K;return r};
+ L.forEach(it=>{
+  const alts=it.nr?[it.o]:[it.o,{w:it.o.h,h:it.o.w}];let best=null;
+  sheets.forEach(sh=>sh.rows.forEach(r=>alts.forEach(a=>{
+   if(a.h<=r.h+E&&r.x+a.w<=SW+E){const sc=(r.h-a.h)*SW+(SW-r.x-a.w);if(!best||sc<best.sc)best={sh,r,a,sc}}})));
+  if(!best){
+   const sa=alts.slice().sort((x,y)=>x.h-y.h);
+   for(const sh of sheets){const a=sa.find(a=>sh.y+a.h<=SL+E&&a.w<=SW+E);if(a){best={sh,r:newRow(sh,a),a};break}}
+   if(!best){
+    const a=sa.find(a=>a.h<=SL&&a.w<=SW);if(!a){big.push(it);return}
+    const sh={rows:[],y:0,parts:[]};sheets.push(sh);best={sh,r:newRow(sh,a),a}}}
+  const{sh,r,a}=best,p={x:r.x,y:r.y,w:a.w,h:a.h,it};sh.parts.push(p);r.parts.push(p);r.x+=a.w+K});
+ return{sheets,big,SW,SL}}
+function packSheets(items){
+ const cmps=[
+  (a,b)=>b.o.h-a.o.h||b.o.w-a.o.w,                       // tallest first
+  (a,b)=>a.cab-b.cab||b.o.h-a.o.h||b.o.w-a.o.w,          // keep each cabinet's parts together
+  (a,b)=>b.o.w-a.o.w||b.o.h-a.o.h,                       // widest first
+  (a,b)=>b.o.w*b.o.h-a.o.w*a.o.h];                       // biggest first
+ let best=null,bs=Infinity;
+ cmps.forEach((cmp,i)=>{const r=shelfPack(items,cmp),sc=r.big.length*1e9+r.sheets.length*1e6+r.sheets.reduce((a,s)=>a+s.rows.length,0)+i*1e-3;if(sc<bs){bs=sc;best=r}});
+ return best}
+
+// Cut order for one sheet: crosscut nearest the middle first so each piece stays easy to move, then rip each row.
+function cutSteps(sh,pk){
+ const rows=sh.rows,K=+S.cut.kerf,cross=[],E=0.05;
+ const edge=i=>rows[i].y+rows[i].h;
+ (function split(lo,hi,top,bottom){
+  if(lo>=hi)return;
+  const mid=(top+bottom)/2;let best=lo;
+  for(let k=lo;k<hi;k++)if(Math.abs(edge(k)-mid)<Math.abs(edge(best)-mid))best=k;
+  cross.push({at:edge(best)-top,pieceH:bottom-top,rows:[lo,hi]});
+  split(lo,best,top,edge(best));split(best+1,hi,rows[best+1].y,bottom)})(0,rows.length-1,0,pk.SL);
+ const rips=rows.map((r,i)=>{
+  const xs=r.parts.map(p=>p.x+p.w);
+  return{i,h:r.h,at:xs,labels:r.parts.map(p=>p.it.label),trim:r.parts.filter(p=>p.h<r.h-E).map(p=>p.it.label+' to '+fr(p.h)),offcut:i===rows.length-1&&pk.SL-edge(i)>K}});
+ return{cross,rips}}
+function stepsHTML(sh,pk){
+ const s=cutSteps(sh,pk);
+ let h='<ol class="steps">';
+ s.cross.forEach(c=>{h+='<li>Crosscut at '+fr(c.at)+' from the top of the '+fr(pk.SW)+' x '+fr(c.pieceH)+' piece.</li>'});
+ s.rips.forEach(r=>{
+  h+='<li>Row '+(r.i+1)+' ('+fr(r.h)+' tall)'+(r.offcut?', cut off the offcut below it first':'')+': rip at '+r.at.map(fr).join(', ')+' for '+r.labels.join(', ')+'.'+(r.trim.length?' Trim to length: '+r.trim.join(', ')+'.':'')+'</li>'});
+ return h+'</ol>'}
+
+function sheetSVG(sh,SW,SL,pr){
+ const f=pr?'#fff':'var(--new)',st=pr?'#000':'var(--acc)',tx=pr?'#000':'var(--ink)';
+ return '<svg viewBox="-1 -1 '+(SW+2)+' '+(SL+2)+'" style="width:100%;max-width:'+(pr?300:340)+'px;background:'+(pr?'#fff':'var(--card)')+'"><rect x="0" y="0" width="'+SW+'" height="'+SL+'" fill="none" stroke="'+st+'" stroke-width=".3"/>'+
+ sh.parts.map(p=>'<rect x="'+p.x+'" y="'+p.y+'" width="'+p.w+'" height="'+p.h+'" fill="'+f+'" stroke="'+st+'" stroke-width=".15"/>'+(p.w>=5&&p.h>=2.5?'<text x="'+(p.x+p.w/2)+'" y="'+(p.y+p.h/2+0.7)+'" font-size="'+(p.w>=9?1.9:1.4)+'" text-anchor="middle" fill="'+tx+'">'+p.it.label+'</text>':'')).join('')+'</svg>'}
+
+// Everything the screen and the printouts need, computed once.
+function project(){
+ const t=tot(),cut=cutParts(),A=cut.items.filter(x=>x.m==='a'),B=cut.items.filter(x=>x.m==='b');
+ const P={t,cut,A,B,pkA:A.length?packSheets(A):null,pkB:B.length?packSheets(B):null,ff:ffLines(),fl:frontsAll()};
+ P.co=costs(P);return P}
+
+/* ---------- 7. SCREEN RENDERING ---------- */
+const opt=(arr,v)=>arr.map(x=>'<option'+(x==v?' selected':'')+'>'+x+'</option>').join('');
+const chip=(c,k,l)=>{const on=!!c[k];return '<label class="chip'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="upd('+c.id+',\''+k+'\',this.checked)">'+l+'</label>'};
+const fld=(c,l,k,arr,val,str)=>'<div><label>'+l+'</label><select onchange="upd('+c.id+',\''+k+'\','+(str?'':'+')+'this.value)">'+opt(arr,val)+'</select></div>';
+const SUMROW=(a,b,bold)=>'<div><span>'+a+'</span>'+(bold?'<b>'+b+'</b>':'<span>'+b+'</span>')+'</div>';
+
+function renderFin(){
+ let h='<h2>Finish</h2><div class="seg"><button class="'+(Q.finish==='paint'?'on':'')+'" onclick="setFinish(\'paint\')">Painted</button><button class="'+(Q.finish==='clear'?'on':'')+'" onclick="setFinish(\'clear\')">Clear/Stain</button></div>';
+ if(Q.finish==='clear'){
+  h+='<label>Finish type</label><div class="seg"><button class="'+(Q.method==='clearcoat'?'on':'')+'" onclick="Q.method=\'clearcoat\';renderAll()">Clearcoat on bare wood</button><button class="'+(Q.method==='stain'?'on':'')+'" onclick="Q.method=\'stain\';renderAll()">Stain on bare wood</button></div>';
+  h+='<label>Wood species</label><select onchange="Q.species=this.value;renderAll()"><option value="">Choose species…</option>'+SPECIES.map(s=>'<option'+(Q.species===s?' selected':'')+'>'+s+'</option>').join('')+'</select>'}
+ $('fin').innerHTML=h}
+
+function cabTitle(c){return (c.corner?'Corner ':'')+(c.sink?'Sink base':c.mw?'Microwave upper':isTall(c)?'Tall base':c.type)}
+function cabSummary(c,r){
+ const b=isBase(c),P=[cabTitle(c)+(c.corner?' 12" x 12"':' '+c.size+'" x '+fr(c.height))+(b?' x '+(+c.depth||24)+'" deep':'')];
+ if(b&&!c.sink&&!c.lazy)P.push(c.drawers+(c.drawers==1?' drawer':' drawers'));
+ if(b&&c.slides)P.push(c.slides+(c.slides==1?' slide out':' slide outs'));
+ P.push(r.sh+(r.sh==1?' shelf':' shelves'));
+ P.push(r.doors+(r.doors==1?' door':' doors'));
+ if(c.cnote)P.push('notes');
+ return P.join(' · ')}
+
+function renderList(){
+ if(!Q.cabs.length){$('list').innerHTML='<div class="card muted">'+(okReady()?'No cabinets yet. Tap Add cabinet.':'Choose a finish above to start adding cabinets.')+'</div>';return}
+ $('list').innerHTML=Q.cabs.map((c,i)=>{
+  const r=calc(c),b=isBase(c),tall=isTall(c),side=dSide(c),note=t=>'<div class="muted">'+t+'</div>',cls='card'+(c.id===lastId?' new':'');
+  const head='<div class="top"><h2 style="margin:0">Cabinet '+(i+1)+'</h2><span style="white-space:nowrap"><button class="ib" onclick="togCab('+c.id+')">'+(c.col?'Edit':'Hide')+'</button> <button class="ib" onclick="dup('+c.id+')">Duplicate</button> <button class="ib" onclick="del('+c.id+')">Remove</button></span></div>'+
+   '<div class="top" style="margin-top:4px;align-items:flex-start"><div class="cs" style="margin:0">'+cabSummary(c,r)+'</div><span class="line" style="white-space:nowrap">'+m(r.price)+'</span></div>';
+  if(c.col)return '<div class="'+cls+'" id="cab'+c.id+'">'+head+'</div>';
+
+  // Size and style
+  const g1='<div class="grp"><h4>Size and style</h4><div class="g3">'+fld(c,'Type','type',['Base','Upper'],c.type,1)+
+   (c.corner?'<div><label>Face</label><div class="muted" style="padding:9px 0">12&quot; x 12&quot;</div></div>':fld(c,'Width (in)','size',SIZES,c.size))+
+   fld(c,'Height (in)','height',b?[34.5,84,96]:[36,42],c.height)+'</div>'+
+   (b?'<div class="g3" style="margin-top:8px">'+fld(c,'Depth (in)','depth',DEPTHS,+c.depth||24)+'</div>':'')+
+   '<div style="margin-top:8px">'+(!tall?chip(c,'corner','Corner Cabinet'):'')+(b&&!tall&&c.size>15?chip(c,'sink','Base Sink'):'')+
+   (!b&&c.size==30&&!c.corner?chip(c,'mw','Microwave Upper'):'')+(b&&!tall?chip(c,'garbage','Garbage Can'):'')+(b&&!tall&&(c.corner||c.lazy)?chip(c,'lazy','Lazy Susan'):'')+'</div>'+
+   (c.corner?'<textarea rows="2" placeholder="Corner cabinet details" oninput="setNote('+c.id+',this.value)">'+esc(c.note||'')+'</textarea>':'')+'</div>';
+
+  // Inside
+  let a='',n='';
+  if(b&&!c.sink&&!c.lazy)a+=fld(c,'Drawers','drawers',c.garbage?[0,1]:tall?[0,1,2,3]:[0,1,2,3,4],c.drawers);
+  if(multiDr(c))a+='<div><label>Drawer layout</label><select onchange="upd('+c.id+',\'dl\',this.value)"><option value="stack"'+(side?'':' selected')+'>Stacked</option><option value="side"'+(side?' selected':'')+'>Side by side</option></select></div>';
+  if(tall){a+=fld(c,'Upper doors','doorsU',c.size>=42?[0,2]:[0,1,2],c.doorsU);if(!(c.drawers>1&&!side))a+=fld(c,'Lower doors','doorsL',c.size>=42?[0,2]:[0,1,2],c.doorsL)}
+  if(!b&&!c.mw)a+=fld(c,'Shelves','shelves',[0,1,2,3],c.shelves===0?0:(c.shelves||2));
+  if(b&&!(tall&&!c.doorsU)&&!c.garbage&&!c.lazy&&!(c.drawers>1&&!tall&&!side)&&!c.slideU)a+=fld(c,'Shelves','shelves',[0,1],c.shelves);
+  if(tall&&!c.doorsU&&c.openPil)a+=fld(c,'Shelves (upper area)','shelves',[1,2,3],c.shelves||1);
+  if(r.pil&&pilOpts(c).length>1)a+=fld(c,'Pilaster length (in)','pilSz',pilOpts(c),c.pilSz||24);
+  if(b&&!c.sink&&!c.garbage&&!c.lazy&&c.drawers<2)n+='<div style="margin-top:8px"><label>Slide outs</label>'+chip(c,'slideU','Upper position')+chip(c,'slideL','Lower position')+'</div>';
+  if(tall&&c.drawers>0)n+=note('Drawers stay below counter height ('+fr(+S.cut.counterH)+').');
+  if(drawerOpenings(c))n+=note('Drawer openings, top to bottom: '+drawerOpenings(c).map(fr).join(', '));
+  if(tall&&c.drawers>1&&!side)n+=note('No lower doors with stacked drawers.');
+  if(b&&(c.garbage||c.lazy))n+=note('No shelves or slide outs with this hardware.');
+  else if(b&&c.drawers>1&&!tall&&!side)n+=note('No shelves with stacked drawers.');
+  else if(b&&c.slideU)n+=note('No shelf with an upper slide out.');
+  if(tall&&!c.doorsU)n+='<div style="margin-top:8px">'+chip(c,'openPil','Add pilasters for shelves in open upper area')+'</div>';
+  const g2='<div class="grp"><h4>Inside</h4><div class="g2">'+a+'</div>'+n+'</div>';
+
+  // Trim and placement
+  let t='<div class="grp"><h4>Trim and placement</h4><div><label>Cabinet touches wall</label>'+chip(c,'wallL','Left')+chip(c,'wallR','Right')+'</div>';
+  if(b)t+='<div>'+chip(c,'noToe','Remove Toe Kick')+((!c.noToe&&(!tall||c.kickOn!==false))?chip(c,'kwL','Kick Wrap Left')+chip(c,'kwR','Kick Wrap Right'):'')+'</div>';
+  if(b&&!c.corner&&c.drawers>0)t+='<div>'+chip(c,'narrowStile','Drawer fronts: 1.5" stiles')+'</div>';
+  if(tall)t+='<div>'+chip(c,'kickOn','Kick plate')+chip(c,'crownOn','Crown molding')+'</div>';
+  if(!b||(tall&&c.crownOn))t+='<div>'+chip(c,'cwL','Crown Wrap Left')+chip(c,'cwR','Crown Wrap Right')+'</div>';
+  t+='</div>';
+
+  // Notes
+  const nt='<div class="grp"><button class="ib" onclick="togNote('+c.id+')">'+(c.nOpen?'Hide Notes':(c.cnote?'Edit Notes':'Add Notes'))+'</button>'+
+   (c.nOpen?'<textarea rows="3" style="margin-top:8px" placeholder="Notes about this cabinet (printed on the Shop Sheet only)" oninput="setCNote('+c.id+',this.value)">'+esc(c.cnote||'')+'</textarea>':'')+'</div>';
+  return '<div class="'+cls+'" id="cab'+c.id+'">'+head+g1+g2+t+nt+'</div>'}).join('')}
+
+// Rows for the Estimated project materials list (screen and Shop Sheet).
+function matRows(P){
+ const t=P.t,T=P.fl.T,rows=[['Hinges',t.hinges],['Pairs of slides',t.sliders],['Pilasters (total)',t.pil]];
+ PIL_SIZES.filter(z=>t.pilBy[z]).forEach(z=>rows.push(['  '+z+'" pilasters',t.pilBy[z]]));
+ Object.keys(t.slideBy).sort((a,b)=>b-a).forEach(L=>rows.splice(rows.findIndex(x=>x[0]==='Pairs of slides')+1,0,['  '+L+'" slides (pairs)',t.slideBy[L]]));
+ rows.push(['Pilaster screws',t.pil*4],['Door screws',t.hinges*2],['Face frame screws',t.hinges],['Slide brackets',t.sliders*2],['Slide screws (1/2")',t.sliders*5],['Shelf clips',t.shelves*4],
+  [fr(+S.cut.t)+' plywood sheets',P.pkA?P.pkA.sheets.length:0],[fr(+S.cut.shelfT)+' plywood sheets',P.pkB?P.pkB.sheets.length:0]);
+ P.ff.forEach(x=>rows.push(['Face frame '+fr(x.w)+' wide',stickText(x)]));
+ T.frameL.forEach(x=>rows.push(['Door and front frame, '+fr(x.w)+' wide',stickText(x)]));
+ T.boxL.forEach(x=>rows.push(['Drawer box maple, '+fr(x.w)+' tall ('+fr(+S.door.boxT)+' thick)',stickText(x)]));
+ rows.push(['Crown molding',stickText(sticks(t.cp))],['Kick plate',stickText(sticks(t.kp))],
+  ['Door and drawer front maple',T.frameBF.toFixed(1)+' board ft'],['Drawer box maple',T.boxBF.toFixed(1)+' board ft'],[fr(+S.door.panelT)+' panel plywood (doors, fronts, drawer bottoms)',T.panelSqft.toFixed(1)+' sq ft']);
+ return rows}
+
+function renderSum(P){
+ const t=P.t;
+ $('extras').innerHTML='<h2>Estimated project materials</h2><div class="alert">Plywood and face frame figures cover the cabinet boxes. Door, drawer front, and drawer box lumber is listed in the last three lines. Corner cabinets and microwave uppers are not included in the plywood, face frame, door, or drawer figures.</div><div class="sum">'+
+  matRows(P).map(x=>SUMROW(x[0],x[1],1)).join('')+'</div>'+
+  '<label style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" style="width:auto" '+(Q.pack?'checked':'')+' onchange="Q.pack=this.checked;renderMain()"> Add packaging ('+m(S.pack)+' per cabinet)</label>';
+ $('sum').innerHTML='<h2>Quote total</h2>'+SUMROW('Cabinets ('+t.n+')',m(t.cab))+SUMROW('Crown molding',m(t.crown))+SUMROW('Kick plate',m(t.kick))+(t.ex?SUMROW('Other items',m(t.ex)):'')+
+  (Q.pack?SUMROW('Packaging',m(t.pack)):'')+(+Q.deliv?SUMROW('Delivery',m(+Q.deliv)):'')+(+Q.disc?SUMROW('Discount','-'+m(+Q.disc)):'')+
+  SUMROW('Subtotal',m(t.sub))+SUMROW('PA sales tax ('+S.tax+'%)',m(t.tax))+'<div class="tot"><span>Total</span><span>'+m(t.total)+'</span></div>'}
+
+function costNotes(co){
+ let h='';
+ if(co.panelMissing)h+='<div class="alert">Enter the 1/4" door panel plywood price in Shop Pricing Rates to include door panels in the cost.</div>';
+ if(co.corners.length)h+='<div class="alert">Corner cabinet'+(co.corners.length>1?'s':'')+' '+co.corners.join(', ')+': box, face frame, door, and drawer materials are not costed (hardware is).</div>';
+ return h}
+function renderCosts(P){
+ const co=P.co;
+ if(!P.t.n){$('costs').innerHTML='<h2>Shop cost (private)</h2><p class="muted">Add cabinets to see your material cost before paint or finish.</p>';return}
+ $('costs').innerHTML='<h2>Shop cost (private, before paint or finish)</h2>'+costNotes(co)+'<div class="sum">'+
+  Object.keys(co.cat).map(k=>SUMROW(k,m(co.cat[k]))).join('')+SUMROW('Total material cost',m(co.total),1)+SUMROW('Quote subtotal (before tax)',m(P.t.sub))+
+  SUMROW('Left for labor, finish, and profit',m(co.margin)+(P.t.sub>0?' ('+Math.round(co.margin/P.t.sub*100)+'%)':''),1)+'</div>'+
+  '<p class="muted" style="margin:10px 0 2px">Cost per cabinet</p><div class="sum">'+co.rows.map(x=>SUMROW('Cabinet '+x.n,m(x.total)+' of '+m(x.price))).join('')+'</div>'}
+
+function renderAdj(){
+ const inp=(l,k)=>'<div><label>'+l+'</label><input type="number" inputmode="decimal" step="any" value="'+esc(Q[k])+'" oninput="Q.'+k+'=this.value;renderMain()"></div>';
+ $('adj').innerHTML='<h2>Other charges and items</h2><div class="row">'+inp('Delivery ($)','deliv')+inp('Discount ($)','disc')+'</div><label>Other items (fillers, end panels, corner cabinets, etc.)</label>'+
+  Q.extras.map((x,i)=>'<div class="row" style="grid-template-columns:2fr 1fr auto;margin-bottom:6px"><input placeholder="Description" value="'+esc(x.desc)+'" oninput="Q.extras['+i+'].desc=this.value;save()"><input type="number" inputmode="decimal" step="any" placeholder="Price" value="'+esc(x.price)+'" oninput="Q.extras['+i+'].price=this.value;renderMain()"><button onclick="delExtra('+i+')">Remove</button></div>').join('')+
+  '<button onclick="addExtra()">+ Add other item</button>'}
+
+function renderSaved(){
+ const a=getSaved();
+ $('saved').innerHTML=a.length?a.map(e=>'<div class="top" style="padding:8px 0;border-bottom:1px dotted var(--line);flex-wrap:wrap"><span><b>'+esc(e.name)+'</b><br><span class="muted">'+new Date(e.ts).toLocaleDateString()+' · '+e.q.cabs.length+' cabinets</span></span><span>'+
+  '<button class="ib" onclick="openQuote('+e.sid+')">Open</button> <button class="ib" onclick="printSavedQuote('+e.sid+')">Print quote</button> <button class="ib" onclick="printSavedShop('+e.sid+')">Print shop</button> <button class="ib" onclick="dlSaved('+e.sid+')">Download</button> <button class="ib" onclick="delSaved('+e.sid+')">Delete</button></span></div>').join('')
+  :'<p class="muted">No saved quotes yet. Tap Save quote on the quote card.</p>'}
+
+function renderBackup(){
+ const last=localStorage.getItem('ces_backup'),days=last?Math.floor((Date.now()-new Date(last))/864e5):null,n=getSaved().length;
+ $('backup').innerHTML='<p class="muted">Your shop pricing and saved quotes are stored only in this browser. Clearing browser data or switching devices erases them. Export a backup file now and then, and keep it somewhere safe.</p>'+
+  ((days===null&&n)||(days!==null&&days>30)?'<div class="alert">'+(days===null?'You have not made a backup yet.':'Your last backup was '+days+' days ago.')+'</div>':'')+
+  '<div class="seg"><button class="p" onclick="exportBackup()">Export backup</button><button onclick="$(\'impf\').click()">Restore from backup</button></div>'+
+  '<input type="file" id="impf" accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0]);this.value=\'\'">'+
+  '<p class="muted" style="margin-bottom:0">'+(last?'Last backup: '+new Date(last).toLocaleDateString()+'. ':'')+'The file holds pricing, settings, the current quote, and all saved quotes ('+n+').</p>'}
+
+const PRICE_FIELDS=[['noDrawer','Credit for 0 drawers ($)'],['h84','84" utility upcharge ($)'],['h96','96" specialty upcharge ($)'],['crown','Crown molding ($/ft)'],['kick','Kick plate ($/ft)'],['stain','Stain upcharge ($/cabinet)'],['mw','Microwave upper price ($)'],['cornerBase','Corner base price ($)'],['cornerUpper','Corner upper price ($)'],['markup','Markup on cabinets and trim (%)'],['waste','Trim waste (%)'],['garbage','Garbage can hardware ($)'],['lazy','Lazy Susan hardware ($)'],['shelf','3rd upper shelf upcharge ($)'],['pack','Packaging ($/cabinet)'],['tax','Sales tax (%)']];
+const MAT_FIELDS=[['hinge','Hinges, 3/4" overlay soft close ($ per pair)'],['ply12','1/2" plywood ($ per sheet)'],['ply34','3/4" plywood ($ per sheet)'],['ply14','1/4" door panel plywood ($ per sheet)'],['maple','Maple for face frames, doors, drawer boxes ($ per board ft)'],['clips1000','Shelf clips ($ per 1000)'],['slide','Drawer slides ($ per pair, any size)'],['bracket','Slider brackets ($ each, 2 per pair of slides)'],['crown','Crown molding cost ($ per ft)'],['kick','Kick plate cost ($ per ft)'],['screwPil','Pilaster screw ($ each)'],['screwDoor','Door screw ($ each)'],['screwFF','Face frame screw ($ each)'],['screwSlide','Slide screw ($ each)'],['lumWaste','Lumber waste allowance (%)']];
+const DOOR_FIELDS=[['overlay','Door and front overlap per edge (in)'],['frameW','Door and front frame width (in)'],['frameT','Door and front thickness (in)'],['panelT','Panel thickness (in)'],['groove','Panel groove depth (in)'],['narrowW','Narrow drawer front stile width (in)'],['boxGroove','Drawer bottom groove depth, all four sides (in)'],['joint','Rail joint depth, added to each end of a rail (in)'],['gap','Gap between a pair of doors (in)'],['boxT','Drawer box stock thickness (in)'],['boxShrink','Drawer box smaller than opening (in)'],['boxClear','Drawer box depth clearance (in)']];
+const CUT_FIELDS=[['sheetW','Sheet width'],['sheetL','Sheet length'],['t','Plywood thickness'],['shelfT','Shelf plywood thickness'],['kerf','Blade kerf'],['dado','Dado depth'],['ffT','Face frame thickness'],['depthU','Upper cabinet plywood depth'],['inset','Back inset from rear edge'],['filler','Filler strip width'],['stickL','Trim stick length (crown, kick plate, face frame)'],['toeH','Toe kick height'],['toeD','Toe kick depth'],['botH','Bottom panel top height (base)'],['ffW','Face frame piece width'],['ffWall','Face frame wall-side stile width'],['ffTopU','Upper top rail width'],['drawerH','Standard drawer opening height'],['counterH','Counter height (tall cabinet drawer limit)']];
+function setS(path,val){
+ const k=path.split('.');let o=S;for(let i=0;i<k.length-1;i++)o=o[k[i]];
+ o[k[k.length-1]]=val===''?'':+val;save();renderMain()}
+function renderSet(){
+ const f=(path,l)=>{const v=path.split('.').reduce((o,k)=>o[k],S);return '<div><label>'+l+'</label><input type="number" inputmode="decimal" step="any" value="'+esc(v)+'" oninput="setS(\''+path+'\',this.value)"></div>'};
+ const sec=(title,fields,pre)=>'<p class="muted" style="margin:14px 0 2px"><b>'+title+'</b></p><div class="row">'+fields.map(x=>f((pre?pre+'.':'')+x[0],x[1])).join('')+'</div>';
+ let h='<p class="muted">Base price includes one drawer. The 84" and 96" upcharges are added to the base price.</p><table class="s"><tr><th>Width</th><th>Base</th><th>Upper</th><th>Drawer</th><th>Slide out</th></tr>';
+ SIZES.forEach(s=>{h+='<tr><td>'+s+'"</td>'+['base','upper','drawer','slide'].map(k=>'<td><input type="number" inputmode="decimal" step="any" value="'+S.sizes[s][k]+'" oninput="setS(\'sizes.'+s+'.'+k+'\',this.value)"></td>').join('')+'</tr>'});
+ h+='</table>'+sec('Prices and rates',PRICE_FIELDS)+
+  sec('Materials cost (what you pay)',MAT_FIELDS,'mat')+
+  '<p class="muted" style="margin:14px 0 2px"><b>Pilasters ($ each)</b></p><div class="row">'+PIL_SIZES.map(z=>f('pil.'+z,z+'" pilaster')).join('')+'</div>'+
+  sec('Doors, drawer fronts, drawer boxes',DOOR_FIELDS,'door')+
+  sec('Cut list settings (inches)',CUT_FIELDS,'cut')+
+  '<p class="muted" style="margin:14px 0 2px"><b>Self-test</b></p><button onclick="runSelfTestUI()">Run self-test</button><div id="stout"></div>';
+ $('set').innerHTML=h}
+
+function renderMain(){
+ if(TESTING)return;
+ const P=project();renderList();renderSum(P);renderCosts(P);save()}
+function renderAll(){
+ if(TESTING)return;
+ renderFin();renderAdj();renderSaved();renderBackup();renderMain();showUndo('');$('addbtn').disabled=!okReady()}
+
+/* ---------- 8. PRINTOUTS AND SAVED QUOTES ---------- */
+const finText=()=>Q.finish==='paint'?'Painted':Q.finish==='clear'?'Clear/Stain – '+(Q.method==='stain'?'Stain on bare wood':'Clearcoat on bare wood')+(Q.species?', '+Q.species:''):'';
+function custBlock(){
+ const L=[['Customer',Q.cust],['Phone',Q.phone],['Email',Q.email]].filter(x=>x[1]).map(x=>'<b>'+x[0]+':</b> '+esc(x[1]));
+ if(!L.length)L.push('<b>Customer:</b> ');
+ if(Q.addr)L.push('<b>Address:</b> '+nl(Q.addr));
+ L.push('<b>Date:</b> '+new Date().toLocaleDateString(),'<b>Finish:</b> '+esc(finText()));
+ return '<p>'+L.join('<br>')+'</p>'}
+const R2=(a,b,bold)=>'<tr><td>'+(bold?'<b>'+a+'</b>':a)+'</td><td class="r">'+(bold?'<b>'+b+'</b>':b)+'</td></tr>';
+const slideText=c=>c.slideU&&c.slideL?'Upper + Lower':c.slideU?'Upper':c.slideL?'Lower':'0';
+function typeText(c){
+ return (c.corner?'Corner ':'')+(c.sink?'Base Sink':c.mw?'Microwave Upper':isTall(c)?'Tall Base':c.type)+(c.garbage?' + Garbage Can':'')+(c.lazy?' + Lazy Susan':'')+
+  (c.cwL?' + Crown Wrap L':'')+(c.cwR?' + Crown Wrap R':'')+(c.kwL?' + Kick Wrap L':'')+(c.kwR?' + Kick Wrap R':'')+
+  (isTall(c)&&c.crownOn?' + Crown Molding':'')+(isTall(c)&&c.kickOn===false?' (no kick plate)':'')}
+function doorsText(c,r){
+ return (isTall(c)?r.doors+' (upper '+c.doorsU+', lower '+(dSide(c)||c.drawers<2?c.doorsL:0)+')':r.doors)+(multiDr(c)?(dSide(c)?' drawers side by side':' drawers stacked'):'')}
+
+// Customer quote: prices only, no hardware counts or shop information.
+function quoteHTML(){
+ const t=tot();
+ let h='<h1>Cabinet Estimator by ES&amp;S Woodworking</h1><h3>Quote</h3>'+custBlock();
+ h+='<table><tr><th>#</th><th>Type</th><th>Width</th><th>Height</th><th>Depth</th><th>Drawers</th><th>Slide outs</th><th>Shelves</th><th>Doors</th><th class="r">Price</th></tr>';
+ Q.cabs.forEach((c,i)=>{
+  const r=calc(c),b=isBase(c);
+  h+='<tr><td>'+(i+1)+'</td><td>'+typeText(c)+'</td><td>'+c.size+'"</td><td>'+c.height+'"</td><td>'+(b?(+c.depth||24)+'"':'-')+'</td><td>'+(b?c.drawers:'-')+'</td><td>'+(b?slideText(c):'-')+'</td><td>'+r.sh+'</td><td>'+doorsText(c,r)+'</td><td class="r">'+m(r.price)+'</td></tr>'});
+ h+='</table>'+Q.cabs.map((c,i)=>c.corner&&c.note?'<p><b>Cabinet '+(i+1)+' (corner) details:</b> '+nl(c.note)+'</p>':'').join('');
+ const ex=(Q.extras||[]).filter(x=>x.desc||+x.price);
+ if(ex.length)h+='<h3>Other items</h3><table>'+ex.map(x=>R2(esc(x.desc||'Item'),m(+x.price||0))).join('')+'</table>';
+ h+='<h3>Summary</h3><table>'+R2('Cabinets ('+t.n+')',m(t.cab))+R2('Crown molding',m(t.crown))+R2('Kick plate',m(t.kick))+(t.ex?R2('Other items',m(t.ex)):'')+(Q.pack?R2('Packaging',m(t.pack)):'')+
+  (+Q.deliv?R2('Delivery',m(+Q.deliv)):'')+(+Q.disc?R2('Discount','-'+m(+Q.disc)):'')+R2('Subtotal',m(t.sub))+R2('PA sales tax ('+S.tax+'%)',m(t.tax))+R2('Total',m(t.total),1)+'</table>';
+ return h}
+
+// Cut list, sheet layout and face frame pieces.
+function cutSec(its,pk,th,pr){
+ if(!its.length)return '';
+ const g={};its.forEach(it=>{const k=it.name+'|'+it.w+'|'+it.h+'|'+it.note;(g[k]=g[k]||{name:it.name,w:it.w,h:it.h,q:0,c:new Set(),note:it.note});g[k].q++;g[k].c.add(it.cab)});
+ const area=its.reduce((a,x)=>a+x.w*x.h,0)-pk.big.reduce((a,x)=>a+x.w*x.h,0),util=pk.sheets.length?area/(pk.sheets.length*pk.SW*pk.SL)*100:0,T=pr?'':' class="s"';
+ let h='<h3>'+fr(th)+' plywood</h3><table'+T+'><tr><th>Part</th><th>Qty</th><th>Width</th><th>Length</th><th>Cabinets</th><th>Notes</th></tr>'+
+  Object.values(g).sort((a,b)=>a.name.localeCompare(b.name)||b.h-a.h).map(x=>'<tr><td>'+x.name+'</td><td>'+x.q+'</td><td>'+fr(x.w)+'</td><td>'+fr(x.h)+'</td><td>'+[...x.c].sort((a,b)=>a-b).join(', ')+'</td><td>'+x.note+'</td></tr>').join('')+'</table>';
+ h+='<p><b>Sheets needed: '+pk.sheets.length+'</b> ('+fr(+S.cut.sheetW)+' x '+fr(+S.cut.sheetL)+'), about '+Math.round(util)+'% used. Kerf '+fr(+S.cut.kerf)+'.</p>';
+ if(pk.big.length)h+='<p><b>Too large for the sheet:</b> '+pk.big.map(x=>x.label).join(', ')+'</p>';
+ h+=pk.sheets.map((sh,i)=>'<div style="margin-bottom:10px"><b>Sheet '+(i+1)+'</b><div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start"><div style="flex:1 1 260px">'+sheetSVG(sh,pk.SW,pk.SL,pr)+'</div><div style="flex:1 1 260px">'+
+  '<div class="muted" style="margin-top:4px"><b>Cut order</b></div>'+stepsHTML(sh,pk)+'</div></div></div>').join('');
+ return h}
+function ffTable(pr){
+ let rows='';
+ Q.cabs.forEach((c,i)=>{const P=ffParts(c);if(P)P.forEach(x=>rows+='<tr><td>'+(i+1)+'</td><td>'+x.name+'</td><td>'+x.q+'</td><td>'+fr(x.w)+'</td><td>'+fr(x.len)+'</td></tr>')});
+ const dn=Q.cabs.map((c,i)=>drawerOpenings(c)?'<li>Cabinet '+(i+1)+': '+drawerOpenings(c).map(fr).join(', ')+'</li>':'').join('');
+ return '<h3>Face frame pieces ('+fr(+S.cut.ffT)+' thick)</h3><table'+(pr?'':' class="s"')+'><tr><th>Cabinet</th><th>Piece</th><th>Qty</th><th>Width</th><th>Length</th></tr>'+rows+'</table>'+
+  (dn?'<p><b>Stacked drawer openings, top to bottom:</b></p><ul>'+dn+'</ul>':'')+
+  '<p><b>Linear feet by width:</b> '+ffLines().map(x=>fr(x.w)+': '+stickText(x)).join('; ')+'</p>'}
+function cutHTML(P,pr){
+ if(!P.cut.items.length)return '<p class="muted">Add cabinets first.</p>';
+ let h=cutSec(P.A,P.pkA,+S.cut.t,pr)+cutSec(P.B,P.pkB,+S.cut.shelfT,pr)+ffTable(pr);
+ if(P.cut.skipped.length)h+='<p>Corner cabinets not included (cut by hand): '+P.cut.skipped.join(', ')+'</p>';
+ return h+'<p class="muted">Labels: cabinet number, then S side, B bottom, K back, F filler (2 per cabinet), H shelf. Sides and backs are never turned (grain runs up the cabinet). Plywood depths exclude the face frame. Crosscuts are full width; the first crosscut is nearest the middle of the sheet.</p>'}
+
+// Doors, drawer fronts and drawer boxes.
+function frontsHTML(P,pr){
+ const F=P.fl,T=pr?'':' class="s"',D=S.door;
+ if(!F.list.length)return '<p class="muted">No doors or drawers to calculate yet.</p>';
+ let h1='',h2='';
+ F.list.forEach(c=>c.items.forEach(it=>{
+  const d=it.d,p=it.p;
+  const frame=p.solid?'Solid '+fr(+D.frameT)+' board':'Stiles '+fr(p.stile.w)+' x '+fr(p.stile.len)+'; rails '+fr(p.rail.w)+' x '+fr(p.rail.len);
+  h1+='<tr><td>'+c.n+'</td><td>'+(it.kind==='Door'?d.where:'Front, '+d.where.toLowerCase())+'</td><td>'+d.qty+'</td><td>'+fr(d.w)+' x '+fr(d.h)+'</td><td>'+frame+'</td><td>'+(p.solid?'-':fr(p.panel.w)+' x '+fr(p.panel.h))+'</td></tr>';
+  if(it.b)h2+='<tr><td>'+c.n+'</td><td>'+d.where+'</td><td>'+d.qty+'</td><td>'+fr(d.bw)+' x '+fr(d.bh)+' x '+fr(d.bd)+'</td><td>2 sides '+fr(it.b.side.w)+' x '+fr(it.b.side.h)+'</td><td>front and back '+fr(it.b.fb.w)+' x '+fr(it.b.fb.h)+'; bottom (panel) '+fr(it.b.bottom.w)+' x '+fr(it.b.bottom.h)+'</td></tr>'}));
+ let h='<h3>Doors and drawer fronts (each is a frame with a '+fr(+D.panelT)+' panel)</h3><table'+T+'><tr><th>Cabinet</th><th>Item</th><th>Qty</th><th>Finished size (W x H)</th><th>Frame pieces (each)</th><th>Panel (each)</th></tr>'+h1+'</table>';
+ if(h2)h+='<h3>Drawer boxes ('+fr(+D.boxT)+' maple; bottoms are '+fr(+D.panelT)+' panel)</h3><table'+T+'><tr><th>Cabinet</th><th>Drawer</th><th>Qty</th><th>Box size (W x H x depth)</th><th>Sides (each box)</th><th>Other pieces (each box)</th></tr>'+h2+'</table>';
+ h+='<p><b>Totals:</b> door and front frame maple '+F.T.frameBF.toFixed(1)+' board ft; drawer box maple '+F.T.boxBF.toFixed(1)+' board ft; '+fr(+D.panelT)+' panels '+F.T.panelSqft.toFixed(1)+' sq ft.</p>';
+ if(F.T.skipped.length)h+='<p>Not calculated: cabinet '+F.T.skipped.join(', ')+'.</p>';
+ return h+'<p class="muted">Doors and fronts overlap the opening by '+fr(+D.overlay)+' on every outside edge; door pairs meet with a '+fr(+D.gap)+' gap. Drawer boxes are '+fr(+D.boxShrink)+' narrower and shorter than the opening. Rails are cut '+fr(2*(+D.joint||0))+' longer than the space between stiles so they seat in the stile joint. Narrow-stile drawer fronts use '+fr(+D.narrowW)+' stiles; rails stay '+fr(+D.frameW)+'. Drawer bottoms sit '+fr(+D.boxGroove)+' deep in a groove on all four sides. Panel size includes the '+fr(+D.groove)+' groove on each edge. Sizes are before any trimming for your joinery.</p>'}
+
+function costsTable(P){
+ const co=P.co,K=Object.keys(co.cat);
+ let h='<table><tr><th>Cabinet</th>'+K.map(k=>'<th class="r">'+k+'</th>').join('')+'<th class="r">Cost</th><th class="r">Quote price</th></tr>'+
+  co.rows.map(x=>'<tr><td>'+x.n+'</td>'+K.map(k=>'<td class="r">'+m(x[k])+'</td>').join('')+'<td class="r">'+m(x.total)+'</td><td class="r">'+m(x.price)+'</td></tr>').join('')+
+  '<tr><td><b>Total</b></td>'+K.map(k=>'<td class="r"><b>'+m(co.cat[k])+'</b></td>').join('')+'<td class="r"><b>'+m(co.total)+'</b></td><td></td></tr></table>'+
+  '<table>'+R2('Quote subtotal (before tax)',m(P.t.sub))+R2('Material cost',m(co.total))+R2('Left for labor, finish, and profit',m(co.margin)+(P.t.sub>0?' ('+Math.round(co.margin/P.t.sub*100)+'%)':''),1)+'</table>';
+ if(co.panelMissing)h+='<p>Note: the 1/4" door panel plywood price is blank, so panels are not costed.</p>';
+ if(co.corners.length)h+='<p>Note: corner cabinet'+(co.corners.length>1?'s':'')+' '+co.corners.join(', ')+' are costed for hardware only.</p>';
+ return h}
+
+// Shop sheet: everything the customer quote leaves out.
+function shopHTML(){
+ const P=project();
+ let h='<h1>Cabinet Estimator by ES&amp;S Woodworking</h1><h3>Shop Sheet (not for customers)</h3>'+custBlock();
+ h+='<h2>Cabinets</h2><table><tr><th>#</th><th>Type and options</th><th>Size (W x H x D)</th><th>Drawers</th><th>Slide outs</th><th>Shelves</th><th>Doors</th><th>Pilasters</th><th>Notes</th></tr>';
+ Q.cabs.forEach((c,i)=>{
+  const r=calc(c),b=isBase(c),o=drawerOpenings(c),nt=[];
+  if(c.wallL||c.wallR)nt.push('Against wall: '+[c.wallL?'left':'',c.wallR?'right':''].filter(Boolean).join(' and '));
+  if(b&&c.noToe)nt.push('No toe kick');
+  if(o)nt.push('Drawer openings '+o.map(fr).join(', '));
+  if(c.corner&&c.note)nt.push('Corner: '+nl(c.note));
+  if(c.cnote)nt.push('<b>Note:</b> '+nl(c.cnote));
+  h+='<tr><td>'+(i+1)+'</td><td>'+typeText(c)+(c.narrowStile&&!c.corner?' + 1.5" drawer front stiles':'')+'</td><td>'+(c.corner?'12" x 12" face':c.size+'" x '+fr(c.height))+(b?' x '+(+c.depth||24)+'"':'')+'</td><td>'+(b?c.drawers:'-')+'</td><td>'+(b?slideText(c):'-')+'</td><td>'+r.sh+'</td><td>'+doorsText(c,r)+'</td><td>'+r.pil+(r.pil?' ('+(c.pilSz||24)+'")':'')+'</td><td>'+nt.join('<br>')+'</td></tr>'});
+ h+='</table><h2>Materials list</h2><table>'+matRows(P).map(x=>R2(x[0],x[1])).join('')+'</table>';
+ h+='<div class="pb"></div><h2>Cut list and sheet layout</h2>'+cutHTML(P,true);
+ h+='<div class="pb"></div><h2>Doors, drawer fronts, and drawer boxes</h2>'+frontsHTML(P,true);
+ h+='<div class="pb"></div><h2>Shop cost (materials, before paint or finish)</h2>'+costsTable(P);
+ return h}
+function genCut(){const P=project();$('cutout').innerHTML=cutHTML(P,false)+frontsHTML(P,false)}
+
+function printHTML(html){$('pr').innerHTML=html;window.print()}
+function printQuote(){printHTML(quoteHTML())}
+function printShop(){printHTML(shopHTML())}
+
+// Saved quotes (stored in this browser)
+function saveQuote(){
+ const a=getSaved();if(!Q.sid)Q.sid=Date.now();
+ const e={sid:Q.sid,name:Q.cust||'No name',ts:new Date().toISOString(),q:JSON.parse(JSON.stringify(Q))},i=a.findIndex(x=>x.sid===Q.sid);
+ if(i>=0)a[i]=e;else a.unshift(e);
+ if(putSaved(a)){save();renderSaved();renderBackup();const b=$('savebtn');b.textContent='Saved';setTimeout(()=>b.textContent='Save quote',1500)}}
+function openQuote(sid){
+ const e=getSaved().find(x=>x.sid===sid);if(!e)return;
+ snap('Opened a saved quote',true);
+ Q=Object.assign(newQ(),JSON.parse(JSON.stringify(e.q)));Q.sid=e.sid;lastId=0;migrate(Q);syncInputs();renderAll();save();scrollTo(0,0)}
+function delSaved(sid){
+ if(!confirm('Delete this saved quote? This cannot be undone.'))return;
+ putSaved(getSaved().filter(x=>x.sid!==sid));if(Q.sid===sid)Q.sid=0;renderSaved();renderBackup();save()}
+// Runs fn against a saved quote without disturbing the quote being edited.
+function withSaved(sid,fn){
+ const e=getSaved().find(x=>x.sid===sid);if(!e)return;
+ const keep=Q;Q=Object.assign(newQ(),JSON.parse(JSON.stringify(e.q)));migrate(Q);
+ try{fn(e)}finally{Q=keep}}
+function printSavedQuote(sid){withSaved(sid,()=>printQuote())}
+function printSavedShop(sid){withSaved(sid,()=>printShop())}
+function dlSaved(sid){
+ withSaved(sid,e=>{
+  const css='body{font:12pt Arial,sans-serif;color:#000;background:#fff;margin:24px}table{width:100%;border-collapse:collapse;margin:8px 0 14px}th,td{border:1px solid #000;padding:4px 6px;text-align:left}td.r,th.r{text-align:right}h1{font-size:18pt}h3{margin:12px 0 2px}';
+  const html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Quote - '+esc(e.name)+'</title><style>'+css+'</style></head><body>'+quoteHTML()+'</body></html>';
+  download('Quote - '+(e.name||'customer').replace(/[^\w\- ]+/g,'').trim()+' - '+e.ts.slice(0,10)+'.html',html,'text/html')})}
+
+/* ---------- 9. SELF-TEST AND START-UP ---------- */
+function selfTest(){
+ const res=[],keepS=S,keepQ=Q,keepL=lastId,keepN=nid,keepU=undoSnap,keepT=TESTING;
+ const ck=(name,got,want)=>{const ok=typeof want==='number'?Math.abs(got-want)<0.005:JSON.stringify(got)===JSON.stringify(want);res.push({name,ok,got,want})};
+ const mk=o=>Object.assign(newCab(),o);
+ try{
+  TESTING=true;S=defS();Q=newQ();nid=1;undoSnap=null;
+  const P0=n=>calc(mk(n)).price,B=S.sizes;
+  ck('Base 18" with one drawer = base price',P0({}),B[18].base*(1+S.markup/100));
+  ck('Base 18" with no drawers = base - $100',P0({drawers:0,shelves:1}),(B[18].base-S.noDrawer)*(1+S.markup/100));
+  ck('Tall 84" adds $200 (+ its drawers)',P0({height:84,drawers:0}),(B[18].base+200)*(1+S.markup/100));
+  ck('Tall 96" adds $300 (+ its drawers)',P0({height:96,drawers:0}),(B[18].base+300)*(1+S.markup/100));
+  ck('Slide length: 24 deep = 22',slideLen({depth:24}),22);ck('Slide length: 20 deep = 18',slideLen({depth:20}),18);ck('Slide length: 22 deep = 20',slideLen({depth:22}),20);ck('Slide length: 19 deep = 16 (tie, shorter)',slideLen({depth:19}),16);
+  ck('Door count 18" base',calc(mk({})).doors,1);ck('Door count 36" base, no drawer stack',calc(mk({size:36})).doors,2);
+  ck('Pilasters with 1 shelf',calc(mk({})).pil,4);ck('No pilasters with 0 shelves',calc(mk({shelves:0})).pil,0);
+  Q.cabs=[mk({})];
+  const items=cutParts().items,f=l=>items.find(x=>x.label===l);
+  ck('Side 23.25 x 34.5',[f('1-S1').w,f('1-S1').h],[23.25,34.5]);
+  ck('Bottom 17.5 x 22.5',[f('1-B').w,f('1-B').h],[17.5,22.25+0.25]);
+  ck('Back 17.5 x 34.5',[f('1-K').w,f('1-K').h],[17.5,34.5]);
+  ck('Filler 17 x 4 (two)',[f('1-F1').w,f('1-F1').h,!!f('1-F2')],[17,4,true]);
+  ck('Shelf 16.75 x 22.125',[f('1-H1').w,f('1-H1').h],[16.75,22.125]);
+  Q.cabs=[mk({depth:20})];ck('Depth 20" side = 19.25',cutParts().items.find(x=>x.label==='1-S1').w,19.25);
+  Q.cabs=[mk({drawers:3,shelves:0,size:18})];
+  const o=drawerOpenings(Q.cabs[0]);ck('Three stacked drawers: top 5"',o[0],5);
+  ck('Three stacked drawers fill the opening',o.reduce((a,x)=>a+x,0)+2*S.cut.ffW,30.5-3);
+  Q.cabs=[mk({})];
+  const F=fronts(Q.cabs[0]);
+  ck('Door 16.5 x 22.5',[F.doors[0].w,F.doors[0].h],[16.5,22.5]);
+  ck('Rail of a 22.5" wide frame is 18.5',framePieces(22.5,20).rail.len,18.5);
+  ck('Narrow stile frame: rail length for 16.5 front',framePieces(16.5,6.5,1.5).rail.len,14.25);ck('Box bottom 14 wide box: 13+0.5 by 20+0.5',[boxPieces({bw:14,bh:4,bd:21}).bottom.w,boxPieces({bw:14,bh:4,bd:21}).bottom.h],[13.5,20.5]);
+  ck('Drawer front 16.5 x 6.5',[F.drawers[0].w,F.drawers[0].h],[16.5,6.5]);
+  ck('Drawer box 14 x 4 x 21',[F.drawers[0].bw,F.drawers[0].bh,F.drawers[0].bd],[14,4,21]);
+  ck('Hardware cost (8+30+3 brackets+0.40+6)',costs(project()).rows[0].Hardware,47.4);ck('Brackets = 2 per pair of slides',tot().sliders*2,2);
+  Q.cabs=[mk({size:24,type:'Base'}),mk({size:30,type:'Upper',height:30,shelves:2,depth:12})];
+  let P=project();
+  const okLayout=pk=>!pk||pk.sheets.every(sh=>sh.parts.every((p,i)=>p.x>=-1e-9&&p.y>=-1e-9&&p.x+p.w<=pk.SW+1e-9&&p.y+p.h<=pk.SL+1e-9&&sh.parts.every((q,j)=>i>=j||p.x+p.w<=q.x+1e-9||q.x+q.w<=p.x+1e-9||p.y+p.h<=q.y+1e-9||q.y+q.h<=p.y+1e-9)));
+  ck('Sheet layouts stay on the sheet with no overlap',okLayout(P.pkA)&&okLayout(P.pkB),true);
+  ck('Every part is placed',P.pkA.sheets.reduce((a,s)=>a+s.parts.length,0),P.A.length);
+  const t=tot();ck('Tax is 6% of subtotal',t.tax,t.sub*S.tax/100);
+  // undo round trip
+  Q=newQ();Q.cust='A';undoSnap={label:'t',q:JSON.stringify(Q),last:0};Q.cust='B';Q.cabs=[mk({})];undo();
+  ck('Undo restores the quote',[Q.cust,Q.cabs.length],['A',0]);
+  // backup round trip
+  Q.cabs=[mk({size:36})];const a=calc(Q.cabs[0]).price,d=JSON.parse(JSON.stringify(backupData()));
+  S=loadSettings(d.settings);Q=Object.assign(newQ(),d.current);migrate(Q);
+  ck('Backup round trip keeps pricing',calc(Q.cabs[0]).price,a);
+  ck('Backup keeps settings',S.mat.hinge,8);
+ }catch(e){res.push({name:'Self-test crashed: '+e.message,ok:false})}
+ finally{S=keepS;Q=keepQ;lastId=keepL;nid=keepN;undoSnap=keepU;TESTING=keepT}
+ return res}
+function runSelfTestUI(){
+ const r=selfTest(),bad=r.filter(x=>!x.ok);
+ $('stout').innerHTML='<p><b>'+(bad.length?bad.length+' of '+r.length+' checks failed':'All '+r.length+' checks passed')+'</b></p>'+
+  r.map(x=>'<div class="muted">'+(x.ok?'✓ ':'✗ ')+esc(x.name)+(x.ok?'':' (got '+esc(JSON.stringify(x.got))+', expected '+esc(JSON.stringify(x.want))+')')+'</div>').join('')}
+
+syncInputs();renderSet();renderAll();
+try{const bad=selfTest().filter(x=>!x.ok);if(bad.length)$('stbanner').innerHTML='<div class="alert bad"><b>Self-test found '+bad.length+' problem(s)</b> – open Shop pricing rates and run the self-test for details. Do not trust quotes until this is fixed.</div>'}catch(e){}
+
+</script>
+</body>
+</html>
