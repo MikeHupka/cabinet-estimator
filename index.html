@@ -47,11 +47,17 @@ summary{cursor:pointer}
 details.grp>summary{list-style:none}details.grp>summary::-webkit-details-marker{display:none}
 details.grp>summary h4{display:inline;margin:0}
 details.grp>summary h4::before{content:'\25B8\00a0'}details.grp[open]>summary h4::before{content:'\25BE\00a0'}
+#tabs{position:sticky;top:0;z-index:6;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:2px;overflow-x:auto;padding:0 8px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+#tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:11px 6px;font-size:.85rem;white-space:nowrap;color:var(--mute)}
+#tabs button:hover{background:var(--bg)}
+#tabs button.on{color:var(--acc);border-bottom-color:var(--acc)}
+.tab[hidden]{display:none}
 details.sec{border-top:1px solid var(--line);padding:8px 0}details.sec>summary{padding:4px 0}
 @media (min-width:1000px){
- main{max-width:1180px;display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:14px;align-items:start}
- main>*{grid-column:1}
- main>.side{grid-column:2;grid-row:1/span 30;position:sticky;top:12px}
+ main{max-width:1180px}
+ #tab-quote{display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:14px;align-items:start}
+ #tab-quote>*{grid-column:1}
+ #tab-quote>.side{grid-column:2;grid-row:1/span 30;position:sticky;top:60px}
  .barin{max-width:1156px}
 }
 table.s{width:100%;border-collapse:collapse;margin-bottom:8px}
@@ -76,7 +82,7 @@ table.s input{padding:6px}
 .steps{margin:4px 0 8px 18px;padding:0;font-size:.85rem}
 @media print{
  body{background:#fff;color:#000;padding:0;font:11pt Arial,sans-serif}
- header,main,.bar,#toast{display:none!important}
+ header,main,.bar,#toast,#tabs{display:none!important}
  #pr{display:block;color:#000;background:#fff}
  #pr table{width:100%;border-collapse:collapse;margin:6px 0 12px}
  #pr th,#pr td{border:1px solid #000;padding:3px 5px;text-align:left;font-size:10pt;vertical-align:top}
@@ -89,8 +95,18 @@ table.s input{padding:6px}
 </style>
 </head>
 <body>
-<header><h1>Cabinet Estimator</h1><small>by ES&amp;S Woodworking · Version 2.0</small></header>
+<header><h1>Cabinet Estimator</h1><small>by ES&amp;S Woodworking · Version 2.1</small></header>
+<nav id="tabs">
+ <button data-tab="quote" onclick="showTab('quote')">Quote</button>
+ <button data-tab="materials" onclick="showTab('materials')">Materials</button>
+ <button data-tab="cut" onclick="showTab('cut')">Cut List</button>
+ <button data-tab="costs" onclick="showTab('costs')">Costs</button>
+ <button data-tab="saved" onclick="showTab('saved')">Saved</button>
+ <button data-tab="settings" onclick="showTab('settings')">Settings</button>
+</nav>
 <main>
+ <div id="stbanner"></div>
+ <section class="tab" id="tab-quote">
  <div class="card">
   <h2>Quote</h2>
   <div class="seg" style="margin-bottom:6px">
@@ -111,7 +127,6 @@ table.s input{padding:6px}
  <div class="card" id="defs"></div>
  <div id="list"></div>
  <div class="card" id="adj"></div>
- <div class="card" id="extras"></div>
  <div class="side">
  <div class="card sum" id="sum"></div>
  <div class="card">
@@ -123,12 +138,12 @@ table.s input{padding:6px}
   <p class="muted" style="margin-bottom:0">Customer Quote: prices only, for the customer. Shop Sheet: hardware, cut list and layout, doors and drawers, notes, and your costs. Do not hand the Shop Sheet to a customer.</p>
  </div>
  </div>
- <div class="card" id="costs"></div>
- <div class="card"><h2>Shop details on screen</h2><p class="muted">Cut list and sheet layout, face frame pieces, doors, drawer fronts, and drawer boxes.</p><button class="p" onclick="genCut()">Generate shop details</button><div id="cutout"></div></div>
- <details class="card"><summary><b>Saved quotes</b></summary><div id="saved"></div></details>
- <details class="card"><summary><b>Backup and restore</b></summary><div id="backup"></div></details>
- <details class="card"><summary><b>Shop pricing rates</b></summary><div id="set"></div></details>
- <div id="stbanner"></div>
+ </section>
+ <section class="tab" id="tab-materials" hidden><div class="card" id="extras"></div></section>
+ <section class="tab" id="tab-cut" hidden><div class="card"><h2>Cut list, sheet layout, and shop pieces</h2><p class="muted">Plywood cut list and layouts, face frame pieces, doors, drawer fronts, and drawer boxes. This updates as you change the quote.</p></div><div id="cutout"></div></section>
+ <section class="tab" id="tab-costs" hidden><div class="card" id="costs"></div></section>
+ <section class="tab" id="tab-saved" hidden><div class="card"><h2>Saved quotes</h2><div id="saved"></div></div><div class="card"><h2>Backup and restore</h2><div id="backup"></div></div></section>
+ <section class="tab" id="tab-settings" hidden><div class="card"><h2>Shop pricing rates</h2><div id="set"></div></div></section>
 </main>
 <div id="toast"><span id="toastmsg"></span><button onclick="undo()">Undo</button></div>
 <div class="bar"><div class="barin"><div id="bartotal" class="bt"></div><button class="p" id="addbtn" onclick="addCab()">+ Add cabinet</button></div></div>
@@ -163,7 +178,7 @@ function defS(){
   cut:{sheetW:48,sheetL:96,t:0.5,shelfT:0.75,kerf:0.125,dado:0.25,depthU:11.25,ffT:0.75,inset:0.5,filler:4,stickL:96,
    toeH:4,toeD:4,botH:5.5,ffW:1.5,ffWall:2.5,ffTopU:2,drawerH:5,counterH:34.5},
   door:{overlay:0.75,frameW:2.375,frameT:0.75,panelT:0.25,groove:0.375,joint:0.375,narrowW:1.5,boxGroove:0.25,gap:0.125,boxT:0.5,boxShrink:1,boxClear:1},
-  quote:{days:30,deposit:30},
+  quote:{days:30,deposit:30,overhead:16},
   top:{overhang:1,mult:1,waste:30,cornerLeg:36,bf:Object.fromEntries(SPECIES.map(s=>[s,'']))},
   mat:{hinge:8,ply12:90,ply34:120,ply14:'',hw:Object.fromEntries(SPECIES.map(s=>[s,s==='Maple'?3.5:''])),clips1000:100,slide:30,bracket:1.5,crown:'',kick:'',
    screwPil:'',screwDoor:'',screwFF:'',screwSlide:'',ffWaste:30}};
@@ -184,7 +199,7 @@ function loadSettings(raw){
  s.v=2;return s}
 
 /* ---------- 2. STATE, UNDO, BACKUP ---------- */
-let S=defS(),Q=newQ(),lastId=0,nid=1,undoSnap=null,TESTING=false,savedF={q:'',st:''};
+let S=defS(),Q=newQ(),lastId=0,nid=1,undoSnap=null,TESTING=false,TAB='quote',savedF={q:'',st:''};
 const $=id=>document.getElementById(id);
 const m=n=>'$'+(Math.round(n*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -239,7 +254,7 @@ function download(name,text,type){
 function getSaved(){try{return JSON.parse(localStorage.getItem('ces_saved')||'[]')}catch(e){return[]}}
 function putSaved(a){try{localStorage.setItem('ces_saved',JSON.stringify(a));return true}catch(e){alert('Could not save. Browser storage may be blocked.');return false}}
 
-function backupData(){return{app:'cabinet-estimator',version:2,appVersion:'2.0',exported:new Date().toISOString(),settings:S,current:Q,saved:getSaved()}}
+function backupData(){return{app:'cabinet-estimator',version:2,appVersion:'2.1',exported:new Date().toISOString(),settings:S,current:Q,saved:getSaved()}}
 function exportBackup(){
  download('Cabinet Estimator backup '+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(backupData(),null,1),'application/json');
  try{localStorage.setItem('ces_backup',new Date().toISOString())}catch(e){}
@@ -327,7 +342,8 @@ function tot(){
  t.crown=t.up/12*S.crown*W;t.kick=t.base/12*S.kick*W;t.pack=Q.pack?t.n*S.pack:0;
  t.ex=(Q.extras||[]).reduce((a,x)=>a+num(x.price),0);
  t.sub=t.cab+t.crown+t.kick+t.ex+t.pack+num(Q.deliv)-num(Q.disc);
- t.tax=t.sub*S.tax/100;t.total=t.sub+t.tax;return t}
+ t.oh=t.sub*num(S.quote.overhead)/100;   // overhead (utilities, blade sharpening): added to every quote, not taxed
+ t.tax=t.sub*S.tax/100;t.total=t.sub+t.oh+t.tax;return t}
 
 /* ----- Editing a cabinet: each rule below keeps the options consistent ----- */
 function newCab(){return{id:nid++,type:'Base',size:18,height:34.5,depth:24,drawers:1,slides:0,slideU:false,slideL:false,shelves:1}}
@@ -460,11 +476,13 @@ function drawerOpenings(c){
   open=Hf-(+C.ffW)-(toe?+C.ffW:+C.botH),top=+C.drawerH,rem=(open-top-(n-1)*(+C.ffW))/(n-1);
  return [top].concat(Array(n-1).fill(rem))}
 
+const ctrStile=c=>!isBase(c)&&!c.corner&&!c.mw&&c.size>36;   // wide uppers get a center stile; the door pair meets over it with the usual 1/8" gap
 function ffParts(c){
  const g=frameGeom(c);if(!g)return null;
  const C=S.cut,b=g.b,tall=isTall(c),P=[];
  P.push({name:'Left stile',w:g.L,len:g.Hf,q:1},{name:'Right stile',w:g.R,len:g.Hf,q:1},
   {name:'Top rail',w:g.topW,len:g.openW,q:1},{name:'Bottom rail',w:g.botW,len:g.openW,q:1});
+ if(ctrStile(c))P.push({name:'Center stile',w:+C.ffW,len:g.openH,q:1});
  if(b){ // sections stacked in the opening: drawers, doors; a middle rail goes between sections
   const dr=c.drawers||0,ds=dSide(c)?(dr?1:0):dr,dl=tall?(c.doorsL&&!(dr>1&&!dSide(c))?1:0):0;
   const sec=tall?(c.doorsU?1:0)+ds+dl:ds+(calc(c).doors>0?1:0);
@@ -666,13 +684,24 @@ function renderDefs(){
   '<p class="muted" style="margin-bottom:0">New cabinets join the room you last picked. Cabinet numbers do not change.</p></div>'}
 
 function cabTitle(c){return (c.corner?'Corner ':'')+(c.sink?'Sink base':c.mw?'Microwave upper':isTall(c)?'Tall base':c.type)}
+// One-line summary of every option that is switched on (shown at the top of each card, and alone when the card is hidden).
 function cabSummary(c,r){
- const b=isBase(c),P=[cabTitle(c)+(c.corner?' 12" x 12"':' '+c.size+'" x '+fr(c.height))+(b?' x '+(+c.depth||24)+'" deep':'')];
- if(b&&!c.sink&&!c.lazy)P.push(c.drawers+(c.drawers==1?' drawer':' drawers'));
- if(b&&c.slides)P.push(c.slides+(c.slides==1?' slide out':' slide outs'));
+ const b=isBase(c),tall=isTall(c),P=[cabTitle(c)+(c.garbage?' + garbage can':'')+(c.lazy?' + lazy susan':'')+(c.corner?' 12" x 12"':' '+c.size+'" x '+fr(c.height))+(b?' x '+(+c.depth||24)+'" deep':'')];
+ if(b&&!c.sink&&!c.lazy)P.push(c.drawers+(c.drawers==1?' drawer':' drawers')+(multiDr(c)?(dSide(c)?' side by side':' stacked'):''));
+ if(b&&c.slides)P.push((c.slideU&&c.slideL?'upper and lower ':c.slideU?'upper ':'lower ')+(c.slides==1?'slide out':'slide outs'));
  P.push(r.sh+(r.sh==1?' shelf':' shelves'));
+ if(r.pil)P.push(r.pil+' pilasters ('+(c.pilSz||24)+'")');
  P.push(r.doors+(r.doors==1?' door':' doors'));
- if(r.top)P.push('countertop');
+ if(tall&&(c.doorsU||c.doorsL))P.push('upper '+(c.doorsU||0)+' / lower '+(c.doorsL||0)+' doors');
+ if(ctrStile(c))P.push('center stile');
+ if(c.wallL||c.wallR)P.push('wall '+(c.wallL&&c.wallR?'left and right':c.wallL?'left':'right'));
+ if(b&&c.noToe)P.push('no toe kick');
+ if(c.kwL||c.kwR)P.push('kick wrap '+(c.kwL&&c.kwR?'L+R':c.kwL?'L':'R'));
+ if(c.cwL||c.cwR)P.push('crown wrap '+(c.cwL&&c.cwR?'L+R':c.cwL?'L':'R'));
+ if(tall&&c.crownOn)P.push('crown molding');
+ if(tall&&c.kickOn===false)P.push('no kick plate');
+ if(b&&!c.corner&&c.drawers>0&&narrowOn(c))P.push('1.5" drawer front stiles');
+ if(r.top)P.push('countertop '+(r.top.sp||'species?')+' '+fr(r.top.T)+(topStainOf(c)?' stained':''));
  if(c.cnote)P.push('notes');
  return P.join(' · ')}
 
@@ -706,6 +735,7 @@ function renderList(){
   if(b&&!(tall&&!c.doorsU)&&!c.garbage&&!c.lazy&&!(c.drawers>1&&!tall&&!side)&&!c.slideU)a+=fld(c,'Shelves','shelves',[0,1],c.shelves);
   if(tall&&!c.doorsU&&c.openPil)a+=fld(c,'Shelves (upper area)','shelves',[1,2,3],c.shelves||1);
   if(r.pil&&pilOpts(c).length>1)a+=fld(c,'Pilaster length (in)','pilSz',pilOpts(c),c.pilSz||24);
+  if(ctrStile(c))n+=note('Center stile ('+fr(+S.cut.ffW)+') between the doors. Door gap '+fr(+S.door.gap)+'.');
   if(b&&!c.sink&&!c.garbage&&!c.lazy&&c.drawers<2)n+='<div style="margin-top:8px"><label>Slide outs</label>'+chip(c,'slideU','Upper position')+chip(c,'slideL','Lower position')+'</div>';
   if(tall&&c.drawers>0)n+=note('Drawers stay below counter height ('+fr(+S.cut.counterH)+').');
   if(drawerOpenings(c))n+=note('Drawer openings, top to bottom: '+drawerOpenings(c).map(fr).join(', '));
@@ -757,14 +787,16 @@ function matRows(P){
   ['Door and drawer front hardwood',(T.frameBF*wf).toFixed(1)+' board ft (incl. '+num(S.mat.ffWaste)+'% waste)'],['Drawer box hardwood (sides, fronts, backs)',(T.boxBF*wf).toFixed(1)+' board ft (incl. '+num(S.mat.ffWaste)+'% waste)'],[fr(+S.door.panelT)+' panel plywood (doors, fronts, drawer bottoms)',T.panelSqft.toFixed(1)+' sq ft']);
  return rows}
 
-function renderSum(P){
- const t=P.t;
+function renderMat(P){
  $('extras').innerHTML='<h2>Estimated project materials</h2><div class="alert">Plywood and face frame figures cover the cabinet boxes. Door, drawer front, and drawer box lumber is listed in the last three lines. Corner cabinets and microwave uppers are not included in the plywood, face frame, door, or drawer figures.</div><div class="sum">'+
-  matRows(P).map(x=>SUMROW(x[0],x[1],1)).join('')+'</div>'+
-  '<label style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" style="width:auto" '+(Q.pack?'checked':'')+' onchange="Q.pack=this.checked;renderMain()"> Add packaging ('+m(S.pack)+' per cabinet)</label>';
+  matRows(P).map(x=>SUMROW(x[0],x[1],1)).join('')+'</div>';
+}
+function renderTotals(P){
+ const t=P.t;
  $('sum').innerHTML='<h2>Quote total</h2>'+SUMROW('Cabinets ('+t.n+')',m(t.cab))+SUMROW('Crown molding',m(t.crown))+SUMROW('Kick plate',m(t.kick))+(t.ex?SUMROW('Other items',m(t.ex)):'')+
   (Q.pack?SUMROW('Packaging',m(t.pack)):'')+(+Q.deliv?SUMROW('Delivery',m(+Q.deliv)):'')+(+Q.disc?SUMROW('Discount','-'+m(+Q.disc)):'')+
-  SUMROW('Subtotal',m(t.sub))+SUMROW('PA sales tax ('+S.tax+'%)',m(t.tax))+'<div class="tot"><span>Total</span><span>'+m(t.total)+'</span></div>'+SUMROW('Deposit due ('+num(S.quote.deposit)+'% of total)',m(t.total*num(S.quote.deposit)/100))+SUMROW('Quote valid until',validUntil())}
+  SUMROW('Subtotal',m(t.sub))+SUMROW('Overhead ('+num(S.quote.overhead)+'%)',m(t.oh))+SUMROW('PA sales tax ('+S.tax+'% of subtotal)',m(t.tax))+'<div class="tot"><span>Total</span><span>'+m(t.total)+'</span></div>'+SUMROW('Deposit due ('+num(S.quote.deposit)+'% of total)',m(t.total*num(S.quote.deposit)/100))+SUMROW('Quote valid until',validUntil());
+ $('bartotal').innerHTML='Total <b>'+m(t.total)+'</b><br><span class="muted">incl. tax</span>'}
 const validUntil=()=>{const d=new Date();d.setDate(d.getDate()+num(S.quote.days));return d.toLocaleDateString()};
 
 function costNotes(co){
@@ -778,15 +810,16 @@ function renderCosts(P){
  const co=P.co;
  if(!P.t.n){$('costs').innerHTML='<h2>Shop cost (private)</h2><p class="muted">Add cabinets to see your material cost before paint or finish.</p>';return}
  $('costs').innerHTML='<h2>Shop cost (private, before paint or finish)</h2>'+costNotes(co)+'<div class="sum">'+
-  Object.keys(co.cat).map(k=>SUMROW(k,m(co.cat[k]))).join('')+SUMROW('Total material cost',m(co.total),1)+SUMROW('Quote subtotal (before tax)',m(P.t.sub))+
+  Object.keys(co.cat).map(k=>SUMROW(k,m(co.cat[k]))).join('')+SUMROW('Total material cost',m(co.total),1)+SUMROW('Quote subtotal (before overhead and tax)',m(P.t.sub))+SUMROW('Overhead collected ('+num(S.quote.overhead)+'%)',m(P.t.oh))+
   SUMROW('Left for labor, finish, and profit',m(co.margin)+(P.t.sub>0?' ('+Math.round(co.margin/P.t.sub*100)+'%)':''),1)+'</div>'+
   '<p class="muted" style="margin:10px 0 2px">Cost per cabinet</p><div class="sum">'+co.rows.map(x=>SUMROW('Cabinet '+x.n,m(x.total)+' of '+m(x.price))).join('')+'</div>'}
 
 function renderAdj(){
- const inp=(l,k)=>'<div><label>'+l+'</label><input type="number" inputmode="decimal" step="any" value="'+esc(Q[k])+'" oninput="Q.'+k+'=this.value;renderMain()"></div>';
+ const inp=(l,k)=>'<div><label>'+l+'</label><input type="number" inputmode="decimal" step="any" value="'+esc(Q[k])+'" oninput="Q.'+k+'=this.value;renderMoney()"></div>';
  $('adj').innerHTML='<h2>Other charges and items</h2><div class="row">'+inp('Delivery ($)','deliv')+inp('Discount ($)','disc')+'</div><label>Other items (fillers, end panels, corner cabinets, etc.)</label>'+
-  Q.extras.map((x,i)=>'<div class="row" style="grid-template-columns:2fr 1fr auto;margin-bottom:6px"><input placeholder="Description" value="'+esc(x.desc)+'" oninput="Q.extras['+i+'].desc=this.value;save()"><input type="number" inputmode="decimal" step="any" placeholder="Price" value="'+esc(x.price)+'" oninput="Q.extras['+i+'].price=this.value;renderMain()"><button onclick="delExtra('+i+')">Remove</button></div>').join('')+
-  '<button onclick="addExtra()">+ Add other item</button>'}
+  Q.extras.map((x,i)=>'<div class="row" style="grid-template-columns:2fr 1fr auto;margin-bottom:6px"><input placeholder="Description" value="'+esc(x.desc)+'" oninput="Q.extras['+i+'].desc=this.value;save()"><input type="number" inputmode="decimal" step="any" placeholder="Price" value="'+esc(x.price)+'" oninput="Q.extras['+i+'].price=this.value;renderMoney()"><button onclick="delExtra('+i+')">Remove</button></div>').join('')+
+  '<button onclick="addExtra()">+ Add other item</button>'+
+  '<label style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" style="width:auto" '+(Q.pack?'checked':'')+' onchange="Q.pack=this.checked;renderMoney()"> Add packaging ('+m(S.pack)+' per cabinet)</label>'}
 
 const STATUSES=['Draft','Sent','Accepted'];
 function renderSaved(){
@@ -808,7 +841,7 @@ function renderBackup(){
 
 const PRICE_FIELDS=[['noDrawer','Credit for 0 drawers ($)'],['h84','84" utility upcharge ($)'],['h96','96" specialty upcharge ($)'],['crown','Crown molding ($/ft)'],['kick','Kick plate ($/ft)'],['stain','Stain upcharge ($/cabinet)'],['mw','Microwave upper price ($)'],['cornerBase','Corner base price ($)'],['cornerUpper','Corner upper price ($)'],['markup','Markup on cabinets and trim (%)'],['waste','Trim waste (%)'],['garbage','Garbage can hardware ($)'],['lazy','Lazy Susan hardware ($)'],['shelf','3rd upper shelf upcharge ($)'],['pack','Packaging ($/cabinet)'],['tax','Sales tax (%)']];
 const MAT_FIELDS=[['hinge','Hinges, 3/4" overlay soft close ($ per pair)'],['ply12','1/2" plywood ($ per sheet)'],['ply34','3/4" plywood ($ per sheet)'],['ply14','1/4" door panel plywood ($ per sheet)'],['clips1000','Shelf clips ($ per 1000)'],['slide','Drawer slides ($ per pair, any size)'],['bracket','Slider brackets ($ each, 2 per pair of slides)'],['crown','Crown molding cost ($ per ft)'],['kick','Kick plate cost ($ per ft)'],['screwPil','Pilaster screw ($ each)'],['screwDoor','Door screw ($ each)'],['screwFF','Face frame screw ($ each)'],['screwSlide','Slide screw ($ each)'],['ffWaste','Hardwood waste (%): face frames, door and front frames, drawer box sides and backs (not drawer bottoms)']];
-const QUOTE_FIELDS=[['days','Quote valid for (days)'],['deposit','Deposit (% of total including tax)']];
+const QUOTE_FIELDS=[['days','Quote valid for (days)'],['deposit','Deposit (% of total including tax)'],['overhead','Overhead (% of subtotal, added to every quote, not taxed)']];
 const TOP_FIELDS=[['overhang','Countertop front overhang added to cabinet depth (in)'],['mult','Countertop price multiplier on lumber cost (labor and profit)'],['waste','Countertop lumber waste (%)'],['cornerLeg','Corner base countertop size, each direction (in)']];
 const DOOR_FIELDS=[['overlay','Door and front overlap per edge (in)'],['frameW','Door and front frame width (in)'],['frameT','Door and front thickness (in)'],['panelT','Panel thickness (in)'],['groove','Panel groove depth (in)'],['narrowW','Narrow drawer front stile width (in)'],['boxGroove','Drawer bottom groove depth, all four sides (in)'],['joint','Rail joint depth, added to each end of a rail (in)'],['gap','Gap between a pair of doors (in)'],['boxT','Drawer box stock thickness (in)'],['boxShrink','Drawer box smaller than opening (in)'],['boxClear','Drawer box depth clearance (in)']];
 const CUT_FIELDS=[['sheetW','Sheet width'],['sheetL','Sheet length'],['t','Plywood thickness'],['shelfT','Shelf plywood thickness'],['kerf','Blade kerf'],['dado','Dado depth'],['ffT','Face frame thickness'],['depthU','Upper cabinet plywood depth'],['inset','Back inset from rear edge'],['filler','Filler strip width'],['stickL','Trim stick length (crown, kick plate, face frame)'],['toeH','Toe kick height'],['toeD','Toe kick depth'],['botH','Bottom panel top height (base)'],['ffW','Face frame piece width'],['ffWall','Face frame wall-side stile width'],['ffTopU','Upper top rail width'],['drawerH','Standard drawer opening height'],['counterH','Counter height (tall cabinet drawer limit)']];
@@ -835,7 +868,18 @@ function renderSet(){
 
 function renderMain(){
  if(TESTING)return;
- const P=project();renderList();renderSum(P);renderCosts(P);$('bartotal').innerHTML='Total <b>'+m(P.t.total)+'</b><br><span class="muted">incl. tax</span>';save()}
+ const P=project();renderTotals(P);
+ if(TAB==='quote')renderList();else if(TAB==='materials')renderMat(P);else if(TAB==='cut')renderCutTab(P);else if(TAB==='costs')renderCosts(P);
+ save()}
+function renderMoney(){if(TESTING)return;renderTotals(project());save()}   // money-only changes (delivery, discount, packaging): skip redrawing the cabinet cards
+function renderCutTab(P){$('cutout').innerHTML='<div class="card">'+cutHTML(P,false)+frontsHTML(P,false)+'</div>'}
+function showTab(t){
+ TAB=t;document.querySelectorAll('.tab').forEach(e=>e.hidden=e.id!=='tab-'+t);
+ document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+ const bar=document.querySelector('.bar');if(bar)bar.style.display=t==='quote'?'':'none';
+ try{localStorage.setItem('ces_tab',t)}catch(e){}
+ if(t==='saved'){renderSaved();renderBackup()}
+ renderMain();scrollTo(0,0)}
 function renderAll(){
  if(TESTING)return;
  renderFin();renderDefs();renderAdj();renderSaved();renderBackup();renderMain();showUndo('');$('addbtn').disabled=!okReady()}
@@ -875,7 +919,7 @@ function quoteHTML(){
  const ex=(Q.extras||[]).filter(x=>x.desc||+x.price);
  if(ex.length)h+='<h3>Other items</h3><table>'+ex.map(x=>R2(esc(x.desc||'Item'),m(+x.price||0))).join('')+'</table>';
  h+='<h3>Summary</h3><table>'+R2('Cabinets ('+t.n+')',m(t.cab))+R2('Crown molding',m(t.crown))+R2('Kick plate',m(t.kick))+(t.ex?R2('Other items',m(t.ex)):'')+(Q.pack?R2('Packaging',m(t.pack)):'')+
-  (+Q.deliv?R2('Delivery',m(+Q.deliv)):'')+(+Q.disc?R2('Discount','-'+m(+Q.disc)):'')+R2('Subtotal',m(t.sub))+R2('PA sales tax ('+S.tax+'%)',m(t.tax))+R2('Total',m(t.total),1)+R2('Deposit due ('+num(S.quote.deposit)+'% of total, due to start work)',m(t.total*num(S.quote.deposit)/100))+'</table>'+
+  (+Q.deliv?R2('Delivery',m(+Q.deliv)):'')+(+Q.disc?R2('Discount','-'+m(+Q.disc)):'')+R2('Subtotal',m(t.sub))+R2('Overhead ('+num(S.quote.overhead)+'%)',m(t.oh))+R2('PA sales tax ('+S.tax+'% of subtotal)',m(t.tax))+R2('Total',m(t.total),1)+R2('Deposit due ('+num(S.quote.deposit)+'% of total, due to start work)',m(t.total*num(S.quote.deposit)/100))+'</table>'+
   '<p><b>This quote is valid until '+validUntil()+'</b> ('+num(S.quote.days)+' days).</p>';
  return h}
 
@@ -925,7 +969,7 @@ function costsTable(P){
  let h='<table><tr><th>Cabinet</th>'+K.map(k=>'<th class="r">'+k+'</th>').join('')+'<th class="r">Cost</th><th class="r">Quote price</th></tr>'+
   co.rows.map(x=>'<tr><td>'+x.n+'</td>'+K.map(k=>'<td class="r">'+m(x[k])+'</td>').join('')+'<td class="r">'+m(x.total)+'</td><td class="r">'+m(x.price)+'</td></tr>').join('')+
   '<tr><td><b>Total</b></td>'+K.map(k=>'<td class="r"><b>'+m(co.cat[k])+'</b></td>').join('')+'<td class="r"><b>'+m(co.total)+'</b></td><td></td></tr></table>'+
-  '<table>'+R2('Quote subtotal (before tax)',m(P.t.sub))+R2('Material cost',m(co.total))+R2('Left for labor, finish, and profit',m(co.margin)+(P.t.sub>0?' ('+Math.round(co.margin/P.t.sub*100)+'%)':''),1)+'</table>';
+  '<table>'+R2('Quote subtotal (before overhead and tax)',m(P.t.sub))+R2('Overhead collected ('+num(S.quote.overhead)+'%)',m(P.t.oh))+R2('Material cost',m(co.total))+R2('Left for labor, finish, and profit',m(co.margin)+(P.t.sub>0?' ('+Math.round(co.margin/P.t.sub*100)+'%)':''),1)+'</table>';
  if(co.panelMissing)h+='<p>Note: the 1/4" door panel plywood price is blank, so panels are not costed.</p>';
  if(co.corners.length)h+='<p>Note: corner cabinet'+(co.corners.length>1?'s':'')+' '+co.corners.join(', ')+' are costed for hardware only.</p>';
  return h}
@@ -940,6 +984,7 @@ function shopHTML(){
   if(c.wallL||c.wallR)nt.push('Against wall: '+[c.wallL?'left':'',c.wallR?'right':''].filter(Boolean).join(' and '));
   if(b&&c.noToe)nt.push('No toe kick');
   if(o)nt.push('Drawer openings '+o.map(fr).join(', '));
+  if(ctrStile(c))nt.push('Center stile '+fr(+S.cut.ffW)+'; door gap '+fr(+S.door.gap));
   if(c.corner&&c.note)nt.push('Corner: '+nl(c.note));
   if(r.top)nt.push('Countertop: '+(topSpOf(c)||'species not chosen')+' '+topT(c)+'" thick, '+(r.top.corner?fr(r.top.W)+' x '+fr(r.top.W)+' L-shaped, '+fr(r.top.D)+' deep':fr(r.top.W)+' x '+fr(r.top.D))+', '+r.top.bf.toFixed(1)+' board ft with '+num(S.top.waste)+'% waste'+(topStainOf(c)?', stained':', not stained'));
   if(c.cnote)nt.push('<b>Note:</b> '+nl(c.cnote));
@@ -949,7 +994,6 @@ function shopHTML(){
  h+='<div class="pb"></div><h2>Doors, drawer fronts, and drawer boxes</h2>'+frontsHTML(P,true);
  h+='<div class="pb"></div><h2>Shop cost (materials, before paint or finish)</h2>'+costsTable(P);
  return h}
-function genCut(){const P=project();$('cutout').innerHTML=cutHTML(P,false)+frontsHTML(P,false)}
 
 function printHTML(html){$('pr').innerHTML=html;window.print()}
 function printQuote(){printHTML(quoteHTML())}
@@ -1041,6 +1085,14 @@ function selfTest(){
   ck('Rooms list cabinets in room order, then no room',roomGroups().map(g=>g.cabs.map(x=>x.i+1)),[[2],[1],[3]]);
   Q.cabs=[mk({})];ck('Deposit is 30% of the total including tax',tot().total*S.quote.deposit/100,tot().total*0.3);
   ck('An older single maple price carries over to Maple',loadSettings({mat:{maple:4.25}}).mat.hw.Maple,4.25);
+  Q=newQ();Q.cabs=[mk({type:'Upper',size:42,height:36,shelves:2,drawers:0})];
+  ck('Upper wider than 36 gets a center stile',ffParts(Q.cabs[0]).some(x=>x.name==='Center stile'),true);
+  ck('Upper 36 wide has no center stile',ffParts(mk({type:'Upper',size:36,height:36,drawers:0})).some(x=>x.name==='Center stile'),false);
+  ck('42 upper door pair width with 1/8 gap',fronts(Q.cabs[0]).doors[0].w,39/2+0.75-0.0625);
+  ck('Door gap default is 1/8',S.door.gap,0.125);
+  Q=newQ();Q.cabs=[mk({})];{const t=tot();ck('Overhead is 16% of the subtotal',t.oh,t.sub*0.16);ck('Overhead is not taxed',t.tax,t.sub*S.tax/100);ck('Total = subtotal + overhead + tax',t.total,t.sub+t.oh+t.tax)}
+  {const c=mk({wallL:true,kwR:true,cwL:true,noToe:true,garbage:true,drawers:1,top:true,topSp:'Walnut',topStain:true}),s=cabSummary(c,calc(c));
+   ck('Card summary lists every active option',['garbage can','wall left','no toe kick','kick wrap R','crown wrap L','countertop Walnut','stained'].filter(x=>!s.includes(x)),[])}
   // undo round trip
   Q=newQ();Q.cust='A';undoSnap={label:'t',q:JSON.stringify(Q),last:0};Q.cust='B';Q.cabs=[mk({})];undo();
   ck('Undo restores the quote',[Q.cust,Q.cabs.length],['A',0]);
@@ -1050,7 +1102,7 @@ function selfTest(){
   ck('Backup round trip keeps pricing',calc(Q.cabs[0]).price,a);
   ck('Backup keeps settings',S.mat.hinge,8);
  }catch(e){res.push({name:'Self-test crashed: '+e.message,ok:false})}
- finally{S=keepS;Q=keepQ;lastId=keepL;nid=keepN;undoSnap=keepU;TESTING=keepT}
+ finally{S=keepS;Q=keepQ;lastId=keepL;nid=keepN;undoSnap=keepU;TESTING=keepT;try{syncInputs()}catch(e){}}   // the test's undo step writes into the customer fields, so put the real values back
  return res}
 function runSelfTestUI(){
  const r=selfTest(),bad=r.filter(x=>!x.ok);
@@ -1058,6 +1110,7 @@ function runSelfTestUI(){
   r.map(x=>'<div class="muted">'+(x.ok?'✓ ':'✗ ')+esc(x.name)+(x.ok?'':' (got '+esc(JSON.stringify(x.got))+', expected '+esc(JSON.stringify(x.want))+')')+'</div>').join('')}
 
 syncInputs();renderSet();renderAll();
+try{const t=localStorage.getItem('ces_tab');if(t&&document.getElementById('tab-'+t))showTab(t)}catch(e){}
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 try{const bad=selfTest().filter(x=>!x.ok);if(bad.length)$('stbanner').innerHTML='<div class="alert bad"><b>Self-test found '+bad.length+' problem(s)</b> – open Shop pricing rates and run the self-test for details. Do not trust quotes until this is fixed.</div>'}catch(e){}
 
