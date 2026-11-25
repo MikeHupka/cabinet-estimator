@@ -95,7 +95,7 @@ table.s input{padding:6px}
 </style>
 </head>
 <body>
-<header><h1>Cabinet Estimator</h1><small>by ES&amp;S Woodworking · Version 2.2</small></header>
+<header><h1>Cabinet Estimator</h1><small>by ES&amp;S Woodworking · Version 2.5</small></header>
 <nav id="tabs">
  <button data-tab="quote" onclick="showTab('quote')">Quote</button>
  <button data-tab="materials" onclick="showTab('materials')">Materials</button>
@@ -135,6 +135,7 @@ table.s input{padding:6px}
    <button class="p" onclick="printQuote()">Print Customer Quote</button>
    <button onclick="printShop()">Print Shop Sheet</button>
   </div>
+  <div class="seg" style="margin-top:6px"><button onclick="printProject()">Print Project Description</button></div>
   <p class="muted" style="margin-bottom:0">Customer Quote: prices only, for the customer. Shop Sheet: hardware, cut list and layout, doors and drawers, notes, and your costs. Do not hand the Shop Sheet to a customer.</p>
  </div>
  </div>
@@ -257,7 +258,7 @@ function download(name,text,type){
 function getSaved(){try{return JSON.parse(localStorage.getItem('ces_saved')||'[]')}catch(e){return[]}}
 function putSaved(a){try{localStorage.setItem('ces_saved',JSON.stringify(a));return true}catch(e){alert('Could not save. Browser storage may be blocked.');return false}}
 
-function backupData(){return{app:'cabinet-estimator',version:2,appVersion:'2.2',exported:new Date().toISOString(),settings:S,current:Q,saved:getSaved()}}
+function backupData(){return{app:'cabinet-estimator',version:2,appVersion:'2.5',exported:new Date().toISOString(),settings:S,current:Q,saved:getSaved()}}
 function exportBackup(){
  download('Cabinet Estimator backup '+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(backupData(),null,1),'application/json');
  try{localStorage.setItem('ces_backup',new Date().toISOString())}catch(e){}
@@ -1040,6 +1041,39 @@ function dlSaved(sid){
   const html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Quote - '+esc(e.name)+'</title><style>'+css+'</style></head><body>'+quoteHTML()+'</body></html>';
   download('Quote - '+(e.name||'customer').replace(/[^\w\- ]+/g,'').trim()+' - '+e.ts.slice(0,10)+'.html',html,'text/html')})}
 
+/* Project description: plain text to paste into a fresh session that builds this project. No prices, no contact details. */
+function projectFile(){return ((Q.job||'Project').trim().replace(/[^\w\- ]+/g,'').replace(/\s+/g,'_')||'Project')+'_Project_Description.txt'}
+function projectText(){
+ const C=S.cut,D=S.door,o=[],p=t=>o.push(t);
+ p('PROJECT DESCRIPTION (paste this into a new session)');
+ p('Job name: '+(Q.job||'(not entered)'));
+ p('Finish: '+(Q.finish==='paint'?'Painted (hardwood frames, doors and drawer boxes: '+(Q.pwood||'Maple')+')':Q.finish==='clear'?'Clear/'+(Q.method==='stain'?'Stain':'Natural')+', species '+(Q.species||'(not chosen)'):'(not chosen)'));
+ p('Countertops: '+(Q.topAll?'included on every non-tall base cabinet unless a cabinet says otherwise':'only where a cabinet says so')+(Q.topT?'; default thickness '+Q.topT+'"':'')+(Q.topSp?'; species '+Q.topSp:'')+(Q.topStain?'; stained':''));
+ p('Drawer fronts with 1.5" rails on every cabinet: '+(Q.narrowAll?'yes':'no'));
+ p('');
+ p('SHOP STANDARDS');
+ p('- Face frames '+fr(+C.ffW)+' stiles and rails ('+fr(+C.ffWall)+' stile against a wall).');
+ p('- Door and drawer front frames '+fr(+D.frameW)+' stiles and rails; 5-piece flat panel fronts, '+fr(+D.overlay)+' overlay; door pairs meet with a '+fr(+D.gap)+' gap.');
+ p('- Bases '+fr(34.5)+' high, 24" deep unless noted, '+fr(+C.toeH)+' toe kick. Uppers '+fr(+C.depthU+0.75)+' deep including face frame, bottom at 54" above the floor.');
+ p('- Tall cabinets: upper doors, a rail at counter height ('+fr(+C.counterH)+'), lower doors to the toe kick. Sink bases have a false drawer front over doors.');
+ p('- Corner base cabinets: '+fr(+S.top.cornerLeg||36)+' along each wall, 24" deep, 12" x 12" face.');
+ p('');
+ p('CABINETS (in order; numbers match the quote)');
+ const groups=roomGroups();
+ groups.forEach(g=>{
+  if(Q.rooms.length)p('-- '+(g.room?g.room.name:'No room')+' --');
+  g.cabs.forEach(({c,i})=>{
+   const r=calc(c);
+   p((i+1)+'. '+(c.name||'')+' | '+cabSummary(c,r).replace(/ · \d+ pilasters \(\d+"\)/,'').replace('countertop species? ','countertop '));
+   if(c.corner&&c.note)p('     Corner detail: '+c.note);
+   if(c.cnote)p('     Note: '+c.cnote)})});
+ p('');
+ p('DETAILS NOT PROVIDED (I will fill these in): wall lengths and layout of each run, which cabinets go on which wall, corner and blind sides, appliances and openings, windows and doors, ceiling height, end panels, crown and trim, customer.');
+ return o.join('\n')}
+function printProject(){
+ if(!Q.cabs.length){toast('Add at least one cabinet first.');return}
+ download(projectFile(),projectText(),'text/plain')}
+
 /* ---------- 9. SELF-TEST AND START-UP ---------- */
 function selfTest(){
  const res=[],keepS=S,keepQ=Q,keepL=lastId,keepN=nid,keepU=undoSnap,keepT=TESTING;
@@ -1124,6 +1158,12 @@ function selfTest(){
    ck('Width label uses fractions',fr(22.5),'22 1/2"');
    const g=frameGeom(mk({size:22.5}));ck('Frame geometry uses the real width',g.openW,22.5-2*S.cut.ffW);
    Q=newQ();ck('Job name defaults blank',Q.job,'')}
+  // v2.5 project description
+  {Q=newQ();Q.job='T Job';Q.rooms=[{id:1,name:'Kitchen'}];Q.rid=2;Q.cabs=[mk({room:1,name:'Base 1',size:22.5}),mk({type:'Upper',height:42,size:30,name:'Upper 1'})];
+   const t=projectText();
+   ck('Description has job name and both cabinets',['T Job','Base 1','Upper 1','22 1/2"','Kitchen'].filter(x=>!t.includes(x)),[]);
+   ck('Description has no prices or phone',/\$\d|Phone|Email/.test(t),false);
+   ck('Description file name',projectFile(),'T_Job_Project_Description.txt')}
   // undo round trip
   Q=newQ();Q.cust='A';undoSnap={label:'t',q:JSON.stringify(Q),last:0};Q.cust='B';Q.cabs=[mk({})];undo();
   ck('Undo restores the quote',[Q.cust,Q.cabs.length],['A',0]);
