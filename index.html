@@ -55,7 +55,7 @@ details.grp>summary h4::before{content:'\25B8\00a0'}details.grp[open]>summary h4
 details.sec{border-top:1px solid var(--line);padding:8px 0}details.sec>summary{padding:4px 0}
 @media (min-width:1000px){
  main{max-width:1180px}
- #tab-quote{display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:14px;align-items:start}
+ #tab-quote:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:14px;align-items:start}
  #tab-quote>*{grid-column:1}
  #tab-quote>.side{grid-column:2;grid-row:1/span 30;position:sticky;top:60px}
  .barin{max-width:1156px}
@@ -95,7 +95,7 @@ table.s input{padding:6px}
 </style>
 </head>
 <body>
-<header><h1>Cabinet Estimator</h1><small>by ES&amp;S Woodworking · Version 2.1</small></header>
+<header><h1>Cabinet Estimator</h1><small>by ES&amp;S Woodworking · Version 2.2</small></header>
 <nav id="tabs">
  <button data-tab="quote" onclick="showTab('quote')">Quote</button>
  <button data-tab="materials" onclick="showTab('materials')">Materials</button>
@@ -114,8 +114,8 @@ table.s input{padding:6px}
    <button id="undobtn" onclick="undo()" disabled>Undo</button>
    <button id="clrbtn" onclick="clearAll()">Start over</button>
   </div>
-  <label for="cust">Customer</label>
-  <input id="cust" autocomplete="off" placeholder="Customer name" oninput="setCust('cust',this.value)">
+  <div class="g2"><div><label for="job">Job name (unique)</label><input id="job" autocomplete="off" placeholder="e.g. Smith Kitchen" oninput="setCust('job',this.value)"></div>
+  <div><label for="cust">Customer</label><input id="cust" autocomplete="off" placeholder="Customer name" oninput="setCust('cust',this.value)"></div></div>
   <div class="g2">
    <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="off" oninput="setCust('phone',this.value)"></div>
    <div><label for="email">Email</label><input id="email" type="email" autocomplete="off" oninput="setCust('email',this.value)"></div>
@@ -158,13 +158,15 @@ table.s input{padding:6px}
 
 /* ---------- 1. DEFAULTS ---------- */
 const SIZES=[12,15,18,21,24,27,30,32,34,36,42,44,46,48];
+const stdFor=w=>SIZES.find(s=>s>=w-1e-9)||48;   // custom widths are priced at the next standard width up
+
 const BASE_SZ=[12,15,18,21,24,30,36,42];   // sizes with fixed default prices; others are scaled from the nearest
 const DEPTHS=[18,19,20,21,22,23,24];       // base cabinet depths shown to the user (include the face frame)
 const PIL_SIZES=[24,36,48,60];
 const SPECIES=['Walnut','Cherry','Maple','Ash','Hickory'];
 const tier=s=>s<=18?[550,450,125,100]:s<=30?[750,550,150,125]:[950,750,175,150]; // base, upper, drawer, slide out
 
-function newQ(){return{cust:'',phone:'',email:'',addr:'',finish:'',method:'',species:'',pwood:'Maple',cabs:[],pack:false,deliv:'',disc:'',extras:[],sid:0,
+function newQ(){return{job:'',cust:'',phone:'',email:'',addr:'',finish:'',method:'',species:'',pwood:'Maple',cabs:[],pack:false,deliv:'',disc:'',extras:[],sid:0,
  topAll:false,topT:1,topSp:'',topStain:false,narrowAll:false,rooms:[],rid:1,curRoom:0}}
 function defS(){
  const z={};
@@ -172,7 +174,7 @@ function defS(){
  SIZES.filter(s=>!z[s]).forEach(s=>{
   const n=BASE_SZ.reduce((a,b)=>Math.abs(b-s)<Math.abs(a-s)?b:a),r=s/n,q=z[n];
   z[s]={base:Math.round(q.base*r),upper:Math.round(q.upper*r),drawer:q.drawer,slide:q.slide}});
- return{v:2,sizes:z,noDrawer:100,h84:200,h96:300,markup:0,waste:10,crown:12,kick:8,stain:75,pack:12,tax:6,shelf:65,
+ return{v:2,sizes:z,noDrawer:100,h84:200,h96:300,markup:0,waste:10,crown:12,kick:8,stain:75,pack:12,tax:6,shelfLo:40,shelfHi:65,
   cornerBase:750,cornerUpper:650,mw:350,garbage:400,lazy:350,
   pil:{24:1.5,36:2.5,48:5,60:8},
   cut:{sheetW:48,sheetL:96,t:0.5,shelfT:0.75,kerf:0.125,dado:0.25,depthU:11.25,ffT:0.75,inset:0.5,filler:4,stickL:96,
@@ -234,13 +236,14 @@ migrate(Q);
 
 function save(){if(TESTING)return;try{localStorage.setItem('ces_S',JSON.stringify(S));localStorage.setItem('ces_Q',JSON.stringify(Q))}catch(e){}}
 function setCust(k,v){Q[k]=v;save()}
-function syncInputs(){['cust','phone','email','addr'].forEach(k=>{const e=$(k);if(e)e.value=Q[k]||''})}
+function syncInputs(){['job','cust','phone','email','addr'].forEach(k=>{const e=$(k);if(e)e.value=Q[k]||''})}
 
 // One-step undo: a snapshot of the current quote is taken before each change.
 function snap(label,loud){if(TESTING)return;undoSnap={label,q:JSON.stringify(Q),last:lastId};showUndo(loud?label:'')}
 function showUndo(msg){
  const b=$('undobtn');if(b){b.disabled=!undoSnap;b.title=undoSnap?'Undo: '+undoSnap.label:''}
- if(msg&&$('toast')){$('toastmsg').textContent=msg;$('toast').style.display='flex';clearTimeout(showUndo.t);showUndo.t=setTimeout(hideToast,7000)}}
+ if(msg&&$('toast')){$('toast').querySelector('button').style.display='';$('toastmsg').textContent=msg;$('toast').style.display='flex';clearTimeout(showUndo.t);showUndo.t=setTimeout(hideToast,7000)}}
+function toast(msg){const t=$('toast');if(!t)return;t.querySelector('button').style.display='none';$('toastmsg').textContent=msg;t.style.display='flex';clearTimeout(showUndo.t);showUndo.t=setTimeout(hideToast,6000)}
 function hideToast(){if($('toast'))$('toast').style.display='none'}
 function undo(){
  if(!undoSnap)return;
@@ -254,7 +257,7 @@ function download(name,text,type){
 function getSaved(){try{return JSON.parse(localStorage.getItem('ces_saved')||'[]')}catch(e){return[]}}
 function putSaved(a){try{localStorage.setItem('ces_saved',JSON.stringify(a));return true}catch(e){alert('Could not save. Browser storage may be blocked.');return false}}
 
-function backupData(){return{app:'cabinet-estimator',version:2,appVersion:'2.1',exported:new Date().toISOString(),settings:S,current:Q,saved:getSaved()}}
+function backupData(){return{app:'cabinet-estimator',version:2,appVersion:'2.2',exported:new Date().toISOString(),settings:S,current:Q,saved:getSaved()}}
 function exportBackup(){
  download('Cabinet Estimator backup '+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(backupData(),null,1),'application/json');
  try{localStorage.setItem('ces_backup',new Date().toISOString())}catch(e){}
@@ -300,7 +303,7 @@ function topCalc(c){
   unit=sp?num(S.top.bf[sp]):0,cost=bf*unit,mult=(S.top.mult===''||S.top.mult==null)?1:+S.top.mult,stain=topStainOf(c)?+S.stain:0;
  return{T,W,D,corner,area,bf,unit,cost,stain,sp:sp||'',price:cost*mult+stain,missing:!sp||!unit}}
 function calc(c){
- const p=S.sizes[c.size],b=isBase(c),tall=isTall(c),side=dSide(c);
+ const p=S.sizes[stdFor(c.size)],b=isBase(c),tall=isTall(c),side=dSide(c);
  let price=b?(c.corner?+S.cornerBase:p.base):(c.mw?+S.mw:c.corner?+S.cornerUpper:p.upper);
  if(b){
   if(c.height==84)price+=num(S.h84);
@@ -311,7 +314,8 @@ function calc(c){
   price+=c.slides*p.slide;
   if(c.garbage)price+=+S.garbage;
   if(c.lazy)price+=+S.lazy}
- if(!b&&c.shelves==3)price+=+S.shelf;
+ const shN=b?(c.shelves||0):((c.mw||c.shelves===0)?0:(c.shelves||2)),shInc=(b||tall)?1:2;       // shelves beyond the ones included cost extra
+ if(shN>shInc)price+=(shN-shInc)*(c.size>36?+S.shelfHi:+S.shelfLo);
  if(stainOn())price+=+S.stain;
  const stacked=b&&c.drawers>1&&!side;
  const doors=tall?(c.doorsU||0)+(stacked?0:(c.doorsL||0)):b?(stacked?0:(c.size<24?1:2)):(c.size<24?1:2);
@@ -346,7 +350,9 @@ function tot(){
  t.tax=t.sub*S.tax/100;t.total=t.sub+t.oh+t.tax;return t}
 
 /* ----- Editing a cabinet: each rule below keeps the options consistent ----- */
-function newCab(){return{id:nid++,type:'Base',size:18,height:34.5,depth:24,drawers:1,slides:0,slideU:false,slideL:false,shelves:1}}
+const AUTO_NAME=/^(Base|Upper) \d+$/;
+function nextName(type){let n=0;Q.cabs.forEach(c=>{const m=(c.name||'').match(/^(Base|Upper) (\d+)$/);if(m&&m[1]===type)n=Math.max(n,+m[2])});return type+' '+(n+1)}
+function newCab(){return{id:nid++,type:'Base',name:nextName('Base'),size:18,height:34.5,depth:24,drawers:1,slides:0,slideU:false,slideL:false,shelves:1}}
 function addCab(){
  if(!okReady())return;
  snap('Added a cabinet');
@@ -355,7 +361,7 @@ function addCab(){
 function dup(id){
  const i=Q.cabs.findIndex(c=>c.id===id);if(i<0)return;
  snap('Duplicated a cabinet');
- const c=Object.assign({},Q.cabs[i],{id:nid++,col:false});Q.cabs.splice(i+1,0,c);lastId=c.id;renderMain()}
+ const c=Object.assign({},Q.cabs[i],{id:nid++,col:false});if(AUTO_NAME.test(c.name||''))c.name=nextName(c.type);Q.cabs.splice(i+1,0,c);lastId=c.id;renderMain()}
 function del(id){snap('Removed a cabinet',true);Q.cabs=Q.cabs.filter(c=>c.id!==id);renderMain()}
 function togCab(id){const c=Q.cabs.find(c=>c.id===id);c.col=!c.col;renderList();save()}
 function togNote(id){const c=Q.cabs.find(c=>c.id===id);c.nOpen=!c.nOpen;renderList();save()}
@@ -394,6 +400,7 @@ function upd(id,k,v){
   if(k==='sink'){c.garbage=false;c.lazy=false}}
  // base <-> upper
  if(k==='type'){
+  if(AUTO_NAME.test(c.name||''))c.name=nextName(v);
   c.sink=false;c.slideU=false;c.slideL=false;c.slides=0;c.height=v==='Base'?34.5:36;c.shelves=v==='Base'?1:2;
   if(v==='Base')c.drawers=1;
   c.garbage=false;c.lazy=false;c.mw=false;c.corner=false;c.cwL=c.cwR=c.kwL=c.kwR=false}
@@ -510,7 +517,7 @@ function fronts(c){
  const C=S.cut,D=S.door,ov=+D.overlay,gap=+D.gap,ff=+C.ffW,dh=+C.drawerH,r=calc(c),tall=isTall(c),side=dSide(c),n=c.drawers||0,out={doors:[],drawers:[]};
  const door=(count,openH,where)=>{
   if(count>0&&openH>0)out.doors.push({where,qty:count,w:count===1?g.openW+2*ov:g.openW/2+ov-gap/2,h:openH+2*ov})};
- const drawer=(qty,ow,oh,where)=>out.drawers.push({where,qty,ow,oh,sw:narrowOn(c)?(+D.narrowW||1.5):+D.frameW,w:ow+2*ov,h:oh+2*ov,bw:ow-(+D.boxShrink),bh:oh-(+D.boxShrink),bd:boxDepthOf(c)});
+ const drawer=(qty,ow,oh,where)=>out.drawers.push({where,qty,ow,oh,rw:narrowOn(c)?(+D.narrowW||1.5):+D.frameW,w:ow+2*ov,h:oh+2*ov,bw:ow-(+D.boxShrink),bh:oh-(+D.boxShrink),bd:boxDepthOf(c)});
  const row=(count,oh,where)=>drawer(count,(g.openW-(count-1)*ff)/count,oh,where);
  if(!isBase(c)){door(r.doors,g.openH,'Doors');return out}
  let OL=g.openH;                                  // opening height of the lower section (to the counter rail on tall cabinets)
@@ -524,8 +531,8 @@ function fronts(c){
  else door(lowerDoors,OL,tall?'Lower doors':'Doors');
  return out}
 
-function framePieces(w,h,sw){ // frame and panel door or front; stiles run full height, rails fit between them (plus the joint allowance)
- const D=S.door,rw=+D.frameW,st=sw||rw,t=+D.frameT,gr=+D.groove,jt=+D.joint||0,iw=w-2*st,ih=h-2*rw;
+function framePieces(w,h,rwid){ // frame and panel door or front; stiles run full height, rails fit between them (plus the joint allowance); rwid narrows the rails only
+ const D=S.door,st=+D.frameW,rw=rwid||st,t=+D.frameT,gr=+D.groove,jt=+D.joint||0,iw=w-2*st,ih=h-2*rw;
  if(iw<=0||ih<=0)return{solid:true,bf:w*h*t/144,sqft:0};
  const rl=iw+2*jt;
  return{solid:false,stile:{w:st,len:h},rail:{w:rw,len:rl},panel:{w:iw+2*gr,h:ih+2*gr},bf:(2*st*h+2*rw*rl)*t/144,sqft:(iw+2*gr)*(ih+2*gr)/144}}
@@ -541,7 +548,7 @@ function frontsAll(){
   const items=[],frame=(d,p)=>{if(!p.solid){add(FW,p.stile.w,p.stile.len,2*d.qty);add(FW,p.rail.w,p.rail.len,2*d.qty)}};
   f.doors.forEach(d=>{const p=framePieces(d.w,d.h);items.push({kind:'Door',d,p});T.frameBF+=d.qty*p.bf;T.panelSqft+=d.qty*p.sqft;frame(d,p)});
   f.drawers.forEach(d=>{
-   const p=framePieces(d.w,d.h,d.sw),b=boxPieces(d);items.push({kind:'Drawer',d,p,b});
+   const p=framePieces(d.w,d.h,d.rw),b=boxPieces(d);items.push({kind:'Drawer',d,p,b});
    T.frameBF+=d.qty*p.bf;T.panelSqft+=d.qty*(p.sqft+b.sqft);T.boxBF+=d.qty*b.bf;frame(d,p);
    add(BX,d.bh,d.bd,2*d.qty);add(BX,d.bh,b.fb.w,2*d.qty)});
   list.push({n:i+1,items})});
@@ -656,6 +663,10 @@ const opt=(arr,v)=>arr.map(x=>'<option'+(x==v?' selected':'')+'>'+x+'</option>')
 const chip=(c,k,l)=>{const on=!!c[k];return '<label class="chip'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="upd('+c.id+',\''+k+'\',this.checked)">'+l+'</label>'};
 const chipE=(c,k,l,on)=>'<label class="chip'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="upd('+c.id+',\''+k+'\',this.checked)">'+l+'</label>';
 const gO=(c,k,d)=>c.gOpen&&k in c.gOpen?!!c.gOpen[k]:d;
+const FRACS=[[0,''],[.125,'1/8'],[.25,'1/4'],[.375,'3/8'],[.5,'1/2'],[.625,'5/8'],[.75,'3/4'],[.875,'7/8']];
+function widthFld(c){const w=+c.size,wh=Math.floor(w+1e-9),fx=Math.round((w-wh)*8)/8;
+ return '<div><label>Width (in)</label><div style="display:flex;gap:4px"><select aria-label="Whole inches" onchange="setWidth('+c.id+',this.value,null)">'+opt(Array.from({length:40},(_,i)=>i+9),wh)+'</select><select aria-label="Fraction" onchange="setWidth('+c.id+',null,this.value)">'+FRACS.map(f=>'<option value="'+f[0]+'"'+(f[0]===fx&&wh<48?' selected':'')+'>'+(f[1]||'0')+'</option>').join('')+'</select></div>'+(stdFor(w)!==w?'<div class="muted" style="font-size:.8rem">Priced as '+stdFor(w)+'"</div>':'')+'</div>'}
+function setWidth(id,wh,fx){const c=Q.cabs.find(c=>c.id===id);if(!c)return;const w=Math.floor(+c.size+1e-9),f=+c.size-w;let nw=wh===null?w:+wh,nf=fx===null?Math.round(f*8)/8:+fx;if(nw>=48)nf=0;upd(id,'size',nw+nf)}
 const fld=(c,l,k,arr,val,str)=>'<div><label>'+l+'</label><select onchange="upd('+c.id+',\''+k+'\','+(str?'':'+')+'this.value)">'+opt(arr,val)+'</select></div>';
 const SUMROW=(a,b,bold)=>'<div><span>'+a+'</span>'+(bold?'<b>'+b+'</b>':'<span>'+b+'</span>')+'</div>';
 
@@ -677,7 +688,7 @@ function renderDefs(){
   '<div class="g3"><div><label>Countertop thickness (in)</label><select onchange="setQ(\'topT\',+this.value)"><option'+(+Q.topT===1?' selected':'')+'>1</option><option'+(+Q.topT===1.5?' selected':'')+'>1.5</option></select></div>'+
   '<div><label>Countertop species</label>'+sp('topSp','Same as finish')+'</div></div>'+
   ck('topStain','Stain the countertops')+
-  ck('narrowAll','Drawer fronts on every cabinet use 1.5" stiles')+
+  ck('narrowAll','Drawer fronts on every cabinet use 1.5" rails')+
   '<div class="grp"><h4>Rooms</h4>'+
   Q.rooms.map(r=>'<div class="row" style="grid-template-columns:1fr auto;margin-bottom:6px"><input value="'+esc(r.name)+'" oninput="renameRoom('+r.id+',this.value)" onchange="renderMain()"><button onclick="delRoom('+r.id+')">Remove</button></div>').join('')+
   '<div class="row" style="grid-template-columns:1fr auto"><input id="newroom" placeholder="Add a room, such as Kitchen" onkeydown="if(event.key===\'Enter\')addRoom()"><button onclick="addRoom()">Add room</button></div>'+
@@ -686,7 +697,7 @@ function renderDefs(){
 function cabTitle(c){return (c.corner?'Corner ':'')+(c.sink?'Sink base':c.mw?'Microwave upper':isTall(c)?'Tall base':c.type)}
 // One-line summary of every option that is switched on (shown at the top of each card, and alone when the card is hidden).
 function cabSummary(c,r){
- const b=isBase(c),tall=isTall(c),P=[cabTitle(c)+(c.garbage?' + garbage can':'')+(c.lazy?' + lazy susan':'')+(c.corner?' 12" x 12"':' '+c.size+'" x '+fr(c.height))+(b?' x '+(+c.depth||24)+'" deep':'')];
+ const b=isBase(c),tall=isTall(c),P=[cabTitle(c)+(c.garbage?' + garbage can':'')+(c.lazy?' + lazy susan':'')+(c.corner?' 12" x 12"':' '+fr(c.size)+' x '+fr(c.height))+(b?' x '+(+c.depth||24)+'" deep':'')];
  if(b&&!c.sink&&!c.lazy)P.push(c.drawers+(c.drawers==1?' drawer':' drawers')+(multiDr(c)?(dSide(c)?' side by side':' stacked'):''));
  if(b&&c.slides)P.push((c.slideU&&c.slideL?'upper and lower ':c.slideU?'upper ':'lower ')+(c.slides==1?'slide out':'slide outs'));
  P.push(r.sh+(r.sh==1?' shelf':' shelves'));
@@ -700,7 +711,7 @@ function cabSummary(c,r){
  if(c.cwL||c.cwR)P.push('crown wrap '+(c.cwL&&c.cwR?'L+R':c.cwL?'L':'R'));
  if(tall&&c.crownOn)P.push('crown molding');
  if(tall&&c.kickOn===false)P.push('no kick plate');
- if(b&&!c.corner&&c.drawers>0&&narrowOn(c))P.push('1.5" drawer front stiles');
+ if(b&&!c.corner&&c.drawers>0&&narrowOn(c))P.push('1.5" drawer front rails');
  if(r.top)P.push('countertop '+(r.top.sp||'species?')+' '+fr(r.top.T)+(topStainOf(c)?' stained':''));
  if(c.cnote)P.push('notes');
  return P.join(' · ')}
@@ -718,8 +729,8 @@ function renderList(){
    (Q.rooms.length?'<div><label>Room</label><select onchange="setRoom('+c.id+',this.value)"><option value="0">No room</option>'+Q.rooms.map(r=>'<option value="'+r.id+'"'+(c.room===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select></div>':'')+'</div>';
 
   // Size and style
-  const g1='<div class="grp"><h4>Size and style</h4><div class="g3">'+fld(c,'Type','type',['Base','Upper'],c.type,1)+
-   (c.corner?'<div><label>Face</label><div class="muted" style="padding:9px 0">12&quot; x 12&quot;</div></div>':fld(c,'Width (in)','size',SIZES,c.size))+
+  const g1='<div class="grp"><h4>Size and style</h4><div class="g3" style="grid-template-columns:1.05fr 1.55fr .8fr">'+fld(c,'Type','type',['Base','Upper'],c.type,1)+
+   (c.corner?'<div><label>Face</label><div class="muted" style="padding:9px 0">12&quot; x 12&quot;</div></div>':widthFld(c))+
    fld(c,'Height (in)','height',b?[34.5,84,96]:[36,42],c.height)+'</div>'+
    (b?'<div class="g3" style="margin-top:8px">'+fld(c,'Depth (in)','depth',DEPTHS,+c.depth||24)+'</div>':'')+
    '<div style="margin-top:8px">'+(!tall?chip(c,'corner','Corner Cabinet'):'')+(b&&!tall&&c.size>15?chip(c,'sink','Base Sink'):'')+
@@ -731,9 +742,9 @@ function renderList(){
   if(b&&!c.sink&&!c.lazy)a+=fld(c,'Drawers','drawers',c.garbage?[0,1]:tall?[0,1,2,3]:[0,1,2,3,4],c.drawers);
   if(multiDr(c))a+='<div><label>Drawer layout</label><select onchange="upd('+c.id+',\'dl\',this.value)"><option value="stack"'+(side?'':' selected')+'>Stacked</option><option value="side"'+(side?' selected':'')+'>Side by side</option></select></div>';
   if(tall){a+=fld(c,'Upper doors','doorsU',c.size>=42?[0,2]:[0,1,2],c.doorsU);if(!(c.drawers>1&&!side))a+=fld(c,'Lower doors','doorsL',c.size>=42?[0,2]:[0,1,2],c.doorsL)}
-  if(!b&&!c.mw)a+=fld(c,'Shelves','shelves',[0,1,2,3],c.shelves===0?0:(c.shelves||2));
-  if(b&&!(tall&&!c.doorsU)&&!c.garbage&&!c.lazy&&!(c.drawers>1&&!tall&&!side)&&!c.slideU)a+=fld(c,'Shelves','shelves',[0,1],c.shelves);
-  if(tall&&!c.doorsU&&c.openPil)a+=fld(c,'Shelves (upper area)','shelves',[1,2,3],c.shelves||1);
+  if(!b&&!c.mw)a+=fld(c,'Shelves','shelves',[0,1,2,3,4,5],c.shelves===0?0:(c.shelves||2));
+  if(b&&!(tall&&!c.doorsU)&&!c.garbage&&!c.lazy&&!(c.drawers>1&&!tall&&!side)&&!c.slideU)a+=fld(c,'Shelves','shelves',[0,1,2,3,4,5],c.shelves);
+  if(tall&&!c.doorsU&&c.openPil)a+=fld(c,'Shelves (upper area)','shelves',[1,2,3,4,5],c.shelves||1);
   if(r.pil&&pilOpts(c).length>1)a+=fld(c,'Pilaster length (in)','pilSz',pilOpts(c),c.pilSz||24);
   if(ctrStile(c))n+=note('Center stile ('+fr(+S.cut.ffW)+') between the doors. Door gap '+fr(+S.door.gap)+'.');
   if(b&&!c.sink&&!c.garbage&&!c.lazy&&c.drawers<2)n+='<div style="margin-top:8px"><label>Slide outs</label>'+chip(c,'slideU','Upper position')+chip(c,'slideL','Lower position')+'</div>';
@@ -750,7 +761,7 @@ function renderList(){
   const tOpen=gO(c,'trim',!!(c.wallL||c.wallR||c.noToe||c.kwL||c.kwR||c.cwL||c.cwR||c.kickOn===false||c.crownOn||c.narrowStile));
   let t='<details class="grp" '+(tOpen?'open ':'')+'ontoggle="setGroup('+c.id+',\'trim\',this.open,'+(tOpen?1:0)+')"><summary><h4>Trim and placement</h4></summary><div><label>Cabinet touches wall</label>'+chip(c,'wallL','Left')+chip(c,'wallR','Right')+'</div>';
   if(b)t+='<div>'+chip(c,'noToe','Remove Toe Kick')+((!c.noToe&&(!tall||c.kickOn!==false))?chip(c,'kwL','Kick Wrap Left')+chip(c,'kwR','Kick Wrap Right'):'')+'</div>';
-  if(b&&!c.corner&&c.drawers>0)t+='<div>'+chipE(c,'narrowStile','Drawer fronts: 1.5" stiles',narrowOn(c))+'</div>';
+  if(b&&!c.corner&&c.drawers>0)t+='<div>'+chipE(c,'narrowStile','Drawer fronts: 1.5" rails',narrowOn(c))+'</div>';
   if(tall)t+='<div>'+chip(c,'kickOn','Kick plate')+chip(c,'crownOn','Crown molding')+'</div>';
   if(!b||(tall&&c.crownOn))t+='<div>'+chip(c,'cwL','Crown Wrap Left')+chip(c,'cwR','Crown Wrap Right')+'</div>';
   t+='</div></details>';
@@ -839,7 +850,7 @@ function renderBackup(){
   '<input type="file" id="impf" accept=".json,application/json" style="display:none" onchange="importBackup(this.files[0]);this.value=\'\'">'+
   '<p class="muted" style="margin-bottom:0">'+(last?'Last backup: '+new Date(last).toLocaleDateString()+'. ':'')+'The file holds pricing, settings, the current quote, and all saved quotes ('+n+').</p>'}
 
-const PRICE_FIELDS=[['noDrawer','Credit for 0 drawers ($)'],['h84','84" utility upcharge ($)'],['h96','96" specialty upcharge ($)'],['crown','Crown molding ($/ft)'],['kick','Kick plate ($/ft)'],['stain','Stain upcharge ($/cabinet)'],['mw','Microwave upper price ($)'],['cornerBase','Corner base price ($)'],['cornerUpper','Corner upper price ($)'],['markup','Markup on cabinets and trim (%)'],['waste','Trim waste (%)'],['garbage','Garbage can hardware ($)'],['lazy','Lazy Susan hardware ($)'],['shelf','3rd upper shelf upcharge ($)'],['pack','Packaging ($/cabinet)'],['tax','Sales tax (%)']];
+const PRICE_FIELDS=[['noDrawer','Credit for 0 drawers ($)'],['h84','84" utility upcharge ($)'],['h96','96" specialty upcharge ($)'],['crown','Crown molding ($/ft)'],['kick','Kick plate ($/ft)'],['stain','Stain upcharge ($/cabinet)'],['mw','Microwave upper price ($)'],['cornerBase','Corner base price ($)'],['cornerUpper','Corner upper price ($)'],['markup','Markup on cabinets and trim (%)'],['waste','Trim waste (%)'],['garbage','Garbage can hardware ($)'],['lazy','Lazy Susan hardware ($)'],['shelfLo','Extra shelf, cabinet 36" wide or less ($ each)'],['shelfHi','Extra shelf, cabinet over 36" wide ($ each)'],['pack','Packaging ($/cabinet)'],['tax','Sales tax (%)']];
 const MAT_FIELDS=[['hinge','Hinges, 3/4" overlay soft close ($ per pair)'],['ply12','1/2" plywood ($ per sheet)'],['ply34','3/4" plywood ($ per sheet)'],['ply14','1/4" door panel plywood ($ per sheet)'],['clips1000','Shelf clips ($ per 1000)'],['slide','Drawer slides ($ per pair, any size)'],['bracket','Slider brackets ($ each, 2 per pair of slides)'],['crown','Crown molding cost ($ per ft)'],['kick','Kick plate cost ($ per ft)'],['screwPil','Pilaster screw ($ each)'],['screwDoor','Door screw ($ each)'],['screwFF','Face frame screw ($ each)'],['screwSlide','Slide screw ($ each)'],['ffWaste','Hardwood waste (%): face frames, door and front frames, drawer box sides and backs (not drawer bottoms)']];
 const QUOTE_FIELDS=[['days','Quote valid for (days)'],['deposit','Deposit (% of total including tax)'],['overhead','Overhead (% of subtotal, added to every quote, not taxed)']];
 const TOP_FIELDS=[['overhang','Countertop front overhang added to cabinet depth (in)'],['mult','Countertop price multiplier on lumber cost (labor and profit)'],['waste','Countertop lumber waste (%)'],['cornerLeg','Corner base countertop size, each direction (in)']];
@@ -887,7 +898,7 @@ function renderAll(){
 /* ---------- 8. PRINTOUTS AND SAVED QUOTES ---------- */
 const finText=()=>Q.finish==='paint'?'Painted':Q.finish==='clear'?'Clear/Stain – '+(Q.method==='stain'?'Stain on bare wood':'Clearcoat on bare wood')+(Q.species?', '+Q.species:''):'';
 function custBlock(){
- const L=[['Customer',Q.cust],['Phone',Q.phone],['Email',Q.email]].filter(x=>x[1]).map(x=>'<b>'+x[0]+':</b> '+esc(x[1]));
+ const L=[['Job',Q.job],['Customer',Q.cust],['Phone',Q.phone],['Email',Q.email]].filter(x=>x[1]).map(x=>'<b>'+x[0]+':</b> '+esc(x[1]));
  if(!L.length)L.push('<b>Customer:</b> ');
  if(Q.addr)L.push('<b>Address:</b> '+nl(Q.addr));
  L.push('<b>Date:</b> '+new Date().toLocaleDateString(),'<b>Finish:</b> '+esc(finText()));
@@ -910,7 +921,7 @@ function quoteHTML(){
  h+='<table><tr><th>#</th><th>Type</th><th>Width</th><th>Height</th><th>Depth</th><th>Drawers</th><th>Slide outs</th><th>Shelves</th><th>Doors</th><th class="r">Price</th></tr>';
  const row=(c,i)=>{
   const r=calc(c),b=isBase(c);
-  return '<tr><td>'+(i+1)+'</td><td>'+(c.name?'<b>'+esc(c.name)+'</b><br>':'')+typeText(c)+'</td><td>'+c.size+'"</td><td>'+c.height+'"</td><td>'+(b?(+c.depth||24)+'"':'-')+'</td><td>'+(b?c.drawers:'-')+'</td><td>'+(b?slideText(c):'-')+'</td><td>'+r.sh+'</td><td>'+doorsText(c,r)+'</td><td class="r">'+m(r.price)+'</td></tr>'};
+  return '<tr><td>'+(i+1)+'</td><td>'+(c.name?'<b>'+esc(c.name)+'</b><br>':'')+typeText(c)+'</td><td>'+fr(c.size)+'</td><td>'+c.height+'"</td><td>'+(b?(+c.depth||24)+'"':'-')+'</td><td>'+(b?c.drawers:'-')+'</td><td>'+(b?slideText(c):'-')+'</td><td>'+r.sh+'</td><td>'+doorsText(c,r)+'</td><td class="r">'+m(r.price)+'</td></tr>'};
  if(Q.rooms.length)roomGroups().forEach(g=>{
   h+='<tr><td colspan="10"><b>'+(g.room?esc(g.room.name):'Other cabinets')+'</b></td></tr>'+g.cabs.map(x=>row(x.c,x.i)).join('')+
    '<tr><td colspan="9" class="r"><b>'+(g.room?esc(g.room.name):'Other cabinets')+' subtotal</b></td><td class="r"><b>'+m(g.cabs.reduce((a,x)=>a+calc(x.c).price,0))+'</b></td></tr>'});
@@ -988,7 +999,7 @@ function shopHTML(){
   if(c.corner&&c.note)nt.push('Corner: '+nl(c.note));
   if(r.top)nt.push('Countertop: '+(topSpOf(c)||'species not chosen')+' '+topT(c)+'" thick, '+(r.top.corner?fr(r.top.W)+' x '+fr(r.top.W)+' L-shaped, '+fr(r.top.D)+' deep':fr(r.top.W)+' x '+fr(r.top.D))+', '+r.top.bf.toFixed(1)+' board ft with '+num(S.top.waste)+'% waste'+(topStainOf(c)?', stained':', not stained'));
   if(c.cnote)nt.push('<b>Note:</b> '+nl(c.cnote));
-  h+='<tr><td>'+(i+1)+'</td><td>'+cabLabel(c)+typeText(c)+(narrowOn(c)&&!c.corner&&isBase(c)&&c.drawers>0?' + 1.5" drawer front stiles':'')+'</td><td>'+(c.corner?'12" x 12" face':c.size+'" x '+fr(c.height))+(b?' x '+(+c.depth||24)+'"':'')+'</td><td>'+(b?c.drawers:'-')+'</td><td>'+(b?slideText(c):'-')+'</td><td>'+r.sh+'</td><td>'+doorsText(c,r)+'</td><td>'+r.pil+(r.pil?' ('+(c.pilSz||24)+'")':'')+'</td><td>'+nt.join('<br>')+'</td></tr>'});
+  h+='<tr><td>'+(i+1)+'</td><td>'+cabLabel(c)+typeText(c)+(narrowOn(c)&&!c.corner&&isBase(c)&&c.drawers>0?' + 1.5" drawer front rails':'')+'</td><td>'+(c.corner?'12" x 12" face':fr(c.size)+' x '+fr(c.height))+(b?' x '+(+c.depth||24)+'"':'')+'</td><td>'+(b?c.drawers:'-')+'</td><td>'+(b?slideText(c):'-')+'</td><td>'+r.sh+'</td><td>'+doorsText(c,r)+'</td><td>'+r.pil+(r.pil?' ('+(c.pilSz||24)+'")':'')+'</td><td>'+nt.join('<br>')+'</td></tr>'});
  h+='</table><h2>Materials list</h2><table>'+matRows(P).map(x=>R2(x[0],x[1])).join('')+'</table>';
  h+='<div class="pb"></div><h2>Cut list and sheet layout</h2>'+cutHTML(P,true);
  h+='<div class="pb"></div><h2>Doors, drawer fronts, and drawer boxes</h2>'+frontsHTML(P,true);
@@ -1001,8 +1012,12 @@ function printShop(){printHTML(shopHTML())}
 
 // Saved quotes (stored in this browser)
 function saveQuote(){
- const a=getSaved();if(!Q.sid)Q.sid=Date.now();
- const e={sid:Q.sid,name:Q.cust||'No name',ts:new Date().toISOString(),q:JSON.parse(JSON.stringify(Q))},i=a.findIndex(x=>x.sid===Q.sid);
+ const a=getSaved();
+ const jn=(Q.job||'').trim();
+ if(!jn){toast('Enter a job name first. Each saved quote needs its own job name.');const j=$('job');if(j)j.focus();return}
+ if(a.some(x=>x.sid!==Q.sid&&((x.q&&x.q.job)||'').trim().toLowerCase()===jn.toLowerCase())){toast('Another saved quote already uses the job name "'+jn+'". Pick a different one.');const j=$('job');if(j)j.focus();return}
+ if(!Q.sid)Q.sid=Date.now();
+ const e={sid:Q.sid,name:jn+(Q.cust?' · '+Q.cust:''),ts:new Date().toISOString(),q:JSON.parse(JSON.stringify(Q))},i=a.findIndex(x=>x.sid===Q.sid);
  if(i>=0)a[i]=e;else a.unshift(e);
  if(putSaved(a)){save();renderSaved();renderBackup();const b=$('savebtn');b.textContent='Saved';setTimeout(()=>b.textContent='Save quote',1500)}}
 function openQuote(sid){
@@ -1063,7 +1078,7 @@ function selfTest(){
   const F=fronts(Q.cabs[0]);
   ck('Door 16.5 x 22.5',[F.doors[0].w,F.doors[0].h],[16.5,22.5]);
   ck('Rail of a 22.5" wide frame is 18.5',framePieces(22.5,20).rail.len,18.5);
-  ck('Narrow stile frame: rail length for 16.5 front',framePieces(16.5,6.5,1.5).rail.len,14.25);ck('Box bottom 14 wide box: 13+0.5 by 20+0.5',[boxPieces({bw:14,bh:4,bd:21}).bottom.w,boxPieces({bw:14,bh:4,bd:21}).bottom.h],[13.5,20.5]);
+  ck('Narrow rail frame: stiles stay 2 3/8, rail length for 16.5 front',[framePieces(16.5,6.5,1.5).rail.len,framePieces(16.5,6.5,1.5).stile.w,framePieces(16.5,6.5,1.5).rail.w].join(),'12.5,2.375,1.5');ck('Box bottom 14 wide box: 13+0.5 by 20+0.5',[boxPieces({bw:14,bh:4,bd:21}).bottom.w,boxPieces({bw:14,bh:4,bd:21}).bottom.h],[13.5,20.5]);
   ck('Drawer front 16.5 x 6.5',[F.drawers[0].w,F.drawers[0].h],[16.5,6.5]);
   ck('Drawer box 14 x 4 x 21',[F.drawers[0].bw,F.drawers[0].bh,F.drawers[0].bd],[14,4,21]);
   ck('Hardware cost (8+30+3 brackets+0.40+6)',costs(project()).rows[0].Hardware,47.4);ck('Brackets = 2 per pair of slides',tot().sliders*2,2);
@@ -1093,6 +1108,22 @@ function selfTest(){
   Q=newQ();Q.cabs=[mk({})];{const t=tot();ck('Overhead is 16% of the subtotal',t.oh,t.sub*0.16);ck('Overhead is not taxed',t.tax,t.sub*S.tax/100);ck('Total = subtotal + overhead + tax',t.total,t.sub+t.oh+t.tax)}
   {const c=mk({wallL:true,kwR:true,cwL:true,noToe:true,garbage:true,drawers:1,top:true,topSp:'Walnut',topStain:true}),s=cabSummary(c,calc(c));
    ck('Card summary lists every active option',['garbage can','wall left','no toe kick','kick wrap R','crown wrap L','countertop Walnut','stained'].filter(x=>!s.includes(x)),[])}
+  // v2.2 checks
+  {Q=newQ();const u=mk({type:'Upper',shelves:2,size:36}),u3=mk({type:'Upper',shelves:3,size:36}),u5=mk({type:'Upper',shelves:5,size:42}),b2=mk({shelves:2,size:36}),b2w=mk({shelves:2,size:42});
+   ck('Two upper shelves cost nothing extra',calc(u3).price-calc(u).price,S.shelfLo);
+   const p5=calc(u5).price,p2=calc(mk({type:'Upper',shelves:2,size:42})).price;ck('Wide upper: 3 extra shelves at the high price',p5-p2,3*S.shelfHi);
+   ck('Base 2nd shelf costs the low price at 36"',calc(b2).price-calc(mk({shelves:1,size:36})).price,S.shelfLo);
+   ck('Base 2nd shelf costs the high price over 36"',calc(b2w).price-calc(mk({shelves:1,size:42})).price,S.shelfHi);
+   ck('Custom width rounds up to next standard price',calc(mk({size:22.5})).price,calc(mk({size:24})).price);
+   ck('Exact standard width keeps its price',calc(mk({size:21})).price,S.sizes[21].base+0);
+   ck('stdFor',[stdFor(9),stdFor(12.125),stdFor(36.125),stdFor(48)],[12,15,42,48]);
+   Q=newQ();Q.cabs=[];const c1=newCab();Q.cabs.push(c1);const c2=newCab();Q.cabs.push(c2);const c3=newCab();c3.type='Upper';c3.name=nextName('Upper');Q.cabs.push(c3);
+   ck('Default cabinet names',[c1.name,c2.name,c3.name],['Base 1','Base 2','Upper 1']);
+   upd(c2.id,'type','Upper');ck('Auto name follows the type',c2.name,'Upper 2');
+   upd(c1.id,'size',22.5);ck('Custom width stored',c1.size,22.5);ck('Fractional width draws a priced-as note',widthFld(c1).includes('Priced as 24'),true);
+   ck('Width label uses fractions',fr(22.5),'22 1/2"');
+   const g=frameGeom(mk({size:22.5}));ck('Frame geometry uses the real width',g.openW,22.5-2*S.cut.ffW);
+   Q=newQ();ck('Job name defaults blank',Q.job,'')}
   // undo round trip
   Q=newQ();Q.cust='A';undoSnap={label:'t',q:JSON.stringify(Q),last:0};Q.cust='B';Q.cabs=[mk({})];undo();
   ck('Undo restores the quote',[Q.cust,Q.cabs.length],['A',0]);
@@ -1113,7 +1144,4 @@ syncInputs();renderSet();renderAll();
 try{const t=localStorage.getItem('ces_tab');if(t&&document.getElementById('tab-'+t))showTab(t)}catch(e){}
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 try{const bad=selfTest().filter(x=>!x.ok);if(bad.length)$('stbanner').innerHTML='<div class="alert bad"><b>Self-test found '+bad.length+' problem(s)</b> – open Shop pricing rates and run the self-test for details. Do not trust quotes until this is fixed.</div>'}catch(e){}
-
-</script>
-</body>
-</html>
+</script></body></html>
